@@ -1,0 +1,65 @@
+# Copyright 2025 Jeff Hodsdon
+# SPDX-License-Identifier: Apache-2.0
+
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("//swift_resources:defs.bzl", "swift_resources_generate", "swift_resources_library")
+
+# Test: Generate code and compare to golden file
+swift_resources_generate(
+    name = "generate_all_resources",
+    fonts = ["//swift_resources/test/fixtures:fonts"],
+    images = ["//swift_resources/test/fixtures:images"],
+    files = ["//swift_resources/test/fixtures:data"],
+    module_name = "TestResources",
+    out = "Generated.swift",
+)
+
+diff_test(
+    name = "golden_test",
+    file1 = ":generate_all_resources",
+    file2 = "expected/Resources.swift",
+)
+
+# Test: Generate with public access level
+swift_resources_generate(
+    name = "generate_public",
+    fonts = ["//swift_resources/test/fixtures:fonts"],
+    access_level = "public",
+    module_name = "PublicResources",
+    out = "PublicResources.swift",
+)
+
+build_test(
+    name = "generate_public_builds",
+    targets = [":generate_public"],
+)
+
+# Test: Generate with bundle override
+swift_resources_generate(
+    name = "generate_bundle_override",
+    fonts = ["//swift_resources/test/fixtures:fonts"],
+    bundle = ".module",
+    module_name = "ModuleResources",
+    out = "ModuleResources.swift",
+)
+
+build_test(
+    name = "generate_bundle_override_builds",
+    targets = [":generate_bundle_override"],
+)
+
+# Test: swift_resources_library macro compiles
+swift_resources_library(
+    name = "compiled_resources",
+    fonts = ["//swift_resources/test/fixtures:fonts"],
+    images = ["//swift_resources/test/fixtures:images"],
+    files = ["//swift_resources/test/fixtures:data"],
+    module_name = "CompiledResources",
+    access_level = "public",
+)
+
+build_test(
+    name = "library_compiles",
+    targets = [":compiled_resources"],
+)

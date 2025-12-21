@@ -1,0 +1,35 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+# Package.resolved - tracked for Bazel swift_deps
+
+# Bazel
+bazel-*
+.bazelrc.user
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# AI Tools
+CLAUDE.md
+.claude/
+.cursor/
+.aider*
+.continue/
+.codeium/
+.sourcery/
+
+# Vim
+*.swp
+*.swo
+*~

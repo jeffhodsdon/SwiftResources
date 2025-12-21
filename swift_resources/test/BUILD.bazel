@@ -1,0 +1,12 @@
+# Copyright 2025 Jeff Hodsdon
+# SPDX-License-Identifier: Apache-2.0
+
+test_suite(
+    name = "all_tests",
+    tests = [
+        "//swift_resources/test/integration:golden_test",
+        "//swift_resources/test/integration:generate_public_builds",
+        "//swift_resources/test/integration:generate_bundle_override_builds",
+        "//swift_resources/test/integration:library_compiles",
+    ],
+)

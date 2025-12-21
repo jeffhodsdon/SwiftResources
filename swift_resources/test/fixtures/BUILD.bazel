@@ -1,0 +1,26 @@
+# Copyright 2025 Jeff Hodsdon
+# SPDX-License-Identifier: Apache-2.0
+
+filegroup(
+    name = "fonts",
+    srcs = glob(
+        ["fonts/**/*.ttf", "fonts/**/*.otf"],
+        allow_empty = True,
+    ),
+    visibility = ["//swift_resources/test:__subpackages__"],
+)
+
+filegroup(
+    name = "images",
+    srcs = glob(
+        ["images/**/*.png", "images/**/*.jpg", "images/**/*.pdf"],
+        allow_empty = True,
+    ),
+    visibility = ["//swift_resources/test:__subpackages__"],
+)
+
+filegroup(
+    name = "data",
+    srcs = glob(["data/**/*"]),
+    visibility = ["//swift_resources/test:__subpackages__"],
+)
