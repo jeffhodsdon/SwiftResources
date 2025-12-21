@@ -8,7 +8,4 @@ swift_binary(
     srcs = glob(["Sources/**/*.swift"]),
     module_name = "SwiftResources",
     visibility = ["//visibility:public"],
-    deps = [
-        "@swiftpkg_swift_argument_parser//:ArgumentParser",
-    ],
 )

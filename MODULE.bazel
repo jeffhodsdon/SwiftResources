@@ -9,24 +9,3 @@ module(
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "rules_swift", version = "3.4.1")
 bazel_dep(name = "apple_support", version = "2.0.0")
-bazel_dep(name = "rules_swift_package_manager", version = "1.11.1")
-
-# Fix: rules_go 0.57.0 incompatible with Bazel 8.5 (Facts.clear() not supported)
-single_version_override(
-    module_name = "rules_go",
-    version = "0.59.0",
-)
-
-swift_deps = use_extension(
-    "@rules_swift_package_manager//:extensions.bzl",
-    "swift_deps",
-)
-swift_deps.from_package(
-    resolved = "//:Package.resolved",
-    swift = "//:Package.swift",
-)
-use_repo(
-    swift_deps,
-    "swift_package",
-    "swiftpkg_swift_argument_parser",
-)

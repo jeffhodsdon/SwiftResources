@@ -9,15 +9,9 @@ let package = Package(
     products: [
         .executable(name: "sr", targets: ["SwiftResources"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
-    ],
     targets: [
         .executableTarget(
             name: "SwiftResources",
-            dependencies: [
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
-            ],
             path: "Sources"
         ),
         .testTarget(
