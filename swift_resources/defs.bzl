@@ -3,8 +3,50 @@
 
 """Bazel rules for SwiftResources."""
 
-load("@rules_swift//swift:swift.bzl", "swift_library")
-load(":providers.bzl", "ResourceModuleInfo")
+load("@rules_swift//swift:swift.bzl", "SwiftInfo", "swift_library")
+load(":providers.bzl", "SwiftResourceInfo")
+
+# -----------------------------------------------------------------------------
+# Wrapper rule to expose SwiftResourceInfo alongside SwiftInfo
+# -----------------------------------------------------------------------------
+
+def _swift_resources_library_wrapper_impl(ctx):
+    """Wraps swift_library and adds SwiftResourceInfo for tooling integration."""
+    resource_files = ctx.files.fonts + ctx.files.images + ctx.files.files
+
+    providers = [
+        SwiftResourceInfo(
+            module_name = ctx.attr.module_name,
+            resources = depset(resource_files),
+        ),
+    ]
+
+    # Forward providers from the inner swift_library
+    inner = ctx.attr.inner_lib
+    if SwiftInfo in inner:
+        providers.append(inner[SwiftInfo])
+    if CcInfo in inner:
+        providers.append(inner[CcInfo])
+    if DefaultInfo in inner:
+        providers.append(inner[DefaultInfo])
+
+    return providers
+
+_swift_resources_library_wrapper = rule(
+    implementation = _swift_resources_library_wrapper_impl,
+    attrs = {
+        "files": attr.label_list(allow_files = True),
+        "fonts": attr.label_list(allow_files = True),
+        "images": attr.label_list(allow_files = True),
+        "inner_lib": attr.label(
+            mandatory = True,
+            providers = [SwiftInfo],
+            doc = "The inner swift_library target",
+        ),
+        "module_name": attr.string(mandatory = True),
+    },
+    doc = "Wrapper that adds SwiftResourceInfo to a swift_library.",
+)
 
 def _swift_resources_generate_impl(ctx):
     """Implementation of swift_resources_generate rule."""
@@ -14,26 +56,23 @@ def _swift_resources_generate_impl(ctx):
     args = ctx.actions.args()
     args.add("generate")
 
-    # Add font directories
-    font_dirs = {}
-    for f in ctx.files.fonts:
-        font_dirs[f.dirname] = True
-    for d in font_dirs.keys():
-        args.add("--fonts", d)
+    # Add individual font files
+    if ctx.files.fonts:
+        args.add("--font-file")
+        for f in ctx.files.fonts:
+            args.add(f.path)
 
-    # Add image directories
-    image_dirs = {}
-    for f in ctx.files.images:
-        image_dirs[f.dirname] = True
-    for d in image_dirs.keys():
-        args.add("--images", d)
+    # Add individual image files
+    if ctx.files.images:
+        args.add("--image-file")
+        for f in ctx.files.images:
+            args.add(f.path)
 
-    # Add file directories
-    file_dirs = {}
-    for f in ctx.files.files:
-        file_dirs[f.dirname] = True
-    for d in file_dirs.keys():
-        args.add("--files", d)
+    # Add individual files
+    if ctx.files.files:
+        args.add("--file-path")
+        for f in ctx.files.files:
+            args.add(f.path)
 
     args.add("--output", output)
     args.add("--module-name", ctx.attr.module_name)
@@ -118,6 +157,10 @@ def swift_resources_library(
         testonly = False):
     """High-level macro that generates Swift code, compiles it, and bundles resources.
 
+    This macro creates three targets:
+    - {name}: The Swift library with type-safe resource accessors
+    - {name}.resources: A filegroup containing all resource files (for ios_application)
+
     Args:
         name: Target name.
         fonts: List of font files (.ttf, .otf).
@@ -150,16 +193,39 @@ def swift_resources_library(
         testonly = testonly,
     )
 
-    # Compile Swift library
+    # Compile Swift library (inner target)
     all_resources = fonts + images + files
+    inner_name = name + "_lib"
 
     swift_library(
-        name = name,
+        name = inner_name,
         srcs = [":" + gen_name],
         module_name = module_name,
         deps = deps,
         data = all_resources,
-        visibility = visibility,
+        visibility = ["//visibility:private"],
         tags = tags,
         testonly = testonly,
     )
+
+    # Wrapper that exposes SwiftResourceInfo for tooling integration
+    _swift_resources_library_wrapper(
+        name = name,
+        files = files,
+        fonts = fonts,
+        images = images,
+        inner_lib = ":" + inner_name,
+        module_name = module_name,
+        visibility = visibility,
+    )
+
+    # Filegroup for ios_application resources attribute
+    # Use: resources = [":MyResources.resources"]
+    if all_resources:
+        native.filegroup(
+            name = name + ".resources",
+            srcs = all_resources,
+            visibility = visibility,
+            tags = tags,
+            testonly = testonly,
+        )

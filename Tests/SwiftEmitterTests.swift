@@ -133,7 +133,7 @@ struct SwiftEmitterTests {
         )
 
         #expect(!output.contains("BundleFinder"))
-        #expect(output.contains("bundle: .module"))
+        #expect(output.contains("bundle: Bundle.module"))
     }
 
     @Test("Custom bundle expression used")
@@ -248,7 +248,7 @@ struct SwiftEmitterTests {
 
         #expect(output.contains("public enum Resources"))
         #expect(output.contains("public struct FontResource"))
-        #expect(output.contains("public static let interBold"))
+        #expect(output.contains("public static var interBold"))
     }
 
     @Test("Internal access level omits access keyword")

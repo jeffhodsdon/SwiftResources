@@ -84,9 +84,12 @@ struct SR {
 // MARK: - Argument Parsing
 
 struct GenerateConfig {
-    var fonts: [String] = []
-    var images: [String] = []
-    var files: [String] = []
+    var fonts: [String] = []        // directories
+    var images: [String] = []       // directories
+    var files: [String] = []        // directories
+    var fontFiles: [String] = []    // individual file paths
+    var imageFiles: [String] = []   // individual file paths
+    var filePaths: [String] = []    // individual file paths
     var output: String?
     var moduleName: String = "Resources"
     var accessLevel: String = "internal"
@@ -131,6 +134,27 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
                 throw CLIError("--files requires at least one directory")
             }
             config.files.append(contentsOf: values)
+
+        case "--font-file":
+            let values = collectValues(args: args, from: &i)
+            if values.isEmpty {
+                throw CLIError("--font-file requires at least one file path")
+            }
+            config.fontFiles.append(contentsOf: values)
+
+        case "--image-file":
+            let values = collectValues(args: args, from: &i)
+            if values.isEmpty {
+                throw CLIError("--image-file requires at least one file path")
+            }
+            config.imageFiles.append(contentsOf: values)
+
+        case "--file-path":
+            let values = collectValues(args: args, from: &i)
+            if values.isEmpty {
+                throw CLIError("--file-path requires at least one file path")
+            }
+            config.filePaths.append(contentsOf: values)
 
         case "--output":
             i += 1
@@ -213,10 +237,15 @@ func generate(config: GenerateConfig) throws {
         }
     }
 
-    // Parse resources
-    let fontResources = try FontParser.parse(directories: config.fonts)
-    let imageResources = try ImageParser.parse(directories: config.images)
-    let fileResources = try FileParser.parse(directories: config.files)
+    // Parse resources from directories
+    var fontResources = try FontParser.parse(directories: config.fonts)
+    var imageResources = try ImageParser.parse(directories: config.images)
+    var fileResources = try FileParser.parse(directories: config.files)
+
+    // Parse individual file paths
+    fontResources.append(contentsOf: try FontParser.parseFiles(config.fontFiles))
+    imageResources.append(contentsOf: ImageParser.parseFiles(config.imageFiles))
+    fileResources.append(contentsOf: FileParser.parseFiles(config.filePaths))
 
     // Warn if directories specified but no resources found
     if !config.fonts.isEmpty, fontResources.isEmpty {

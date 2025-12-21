@@ -88,9 +88,9 @@ struct NameSanitizerTests {
         #expect(NameSanitizer.sanitize("DEFAULT") == "`default`")
     }
 
-    @Test("Non-reserved word unchanged")
-    func nonReserved() {
-        #expect(NameSanitizer.sanitize("myClass") == "myclass")
+    @Test("Preserves internal camelCase in first segment")
+    func preservesCamelCase() {
+        #expect(NameSanitizer.sanitize("myClass") == "myClass")
     }
 
     @Test("Reserved word in compound name not escaped")

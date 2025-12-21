@@ -67,16 +67,41 @@ enum TestResources {
         #endif
     }
 
+    // MARK: - File Resource
+
+    struct FileResource: Sendable, Hashable {
+        let name: String
+        let fileExtension: String
+        let bundle: Bundle
+
+        var url: URL? {
+            bundle.url(forResource: name, withExtension: fileExtension)
+        }
+
+        var data: Data? {
+            guard let url = url else { return nil }
+            return try? Data(contentsOf: url)
+        }
+    }
+
     // MARK: - Fonts
 
     enum fonts {
-        static let lilexRegular = FontResource(fontName: "Lilex-Regular", bundle: bundle)
+        private static let _register: Void = { registerFonts() }()
+
+        static var lilexRegular: FontResource { _ = _register; return FontResource(fontName: "Lilex-Regular", bundle: bundle) }
     }
 
     // MARK: - Images
 
     enum images {
         static let logo = ImageResource(name: "logo", bundle: bundle)
+    }
+
+    // MARK: - Files
+
+    enum files {
+        static let config = FileResource(name: "config", fileExtension: "json", bundle: bundle)
     }
 
     // MARK: - Font Registration

@@ -72,6 +72,47 @@ enum FontParser {
             }
     }
 
+    /// Parses individual font file paths directly.
+    /// - Parameter paths: File paths to parse
+    /// - Returns: Discovered fonts with PostScript names, sorted by name
+    static func parseFiles(_ paths: [String]) throws -> [DiscoveredFont] {
+        var fonts = [DiscoveredFont]()
+
+        for path in paths {
+            let url = URL(fileURLWithPath: path).standardizedFileURL
+            let ext = url.pathExtension.lowercased()
+
+            guard supportedExtensions.contains(ext) else {
+                continue
+            }
+
+            let fileName = url.deletingPathExtension().lastPathComponent
+            let postScriptNames = extractPostScriptNames(from: url)
+
+            if postScriptNames.isEmpty {
+                fonts.append(DiscoveredFont(
+                    postScriptName: fileName,
+                    fileName: fileName,
+                    fileExtension: ext,
+                    relativePath: url.lastPathComponent
+                ))
+            } else {
+                for postScriptName in postScriptNames {
+                    fonts.append(DiscoveredFont(
+                        postScriptName: postScriptName,
+                        fileName: fileName,
+                        fileExtension: ext,
+                        relativePath: url.lastPathComponent
+                    ))
+                }
+            }
+        }
+
+        return fonts.sorted {
+            $0.postScriptName.localizedStandardCompare($1.postScriptName) == .orderedAscending
+        }
+    }
+
     /// Extracts PostScript names from a font file using Core Text.
     /// - Parameter url: URL to the font file
     /// - Returns: Array of PostScript names (multiple for .ttc files)

@@ -52,4 +52,27 @@ enum FileParser {
             $0.name.localizedStandardCompare($1.name) == .orderedAscending
         }
     }
+
+    /// Parses individual file paths directly.
+    /// - Parameter paths: File paths to parse
+    /// - Returns: Discovered file resources, sorted by name
+    static func parseFiles(_ paths: [String]) -> [DiscoveredResource] {
+        var resources = [DiscoveredResource]()
+
+        for path in paths {
+            let url = URL(fileURLWithPath: path).standardizedFileURL
+            let ext = url.pathExtension.lowercased()
+            let name = url.deletingPathExtension().lastPathComponent
+
+            resources.append(DiscoveredResource(
+                name: name,
+                extension: ext,
+                relativePath: url.lastPathComponent
+            ))
+        }
+
+        return resources.sorted {
+            $0.name.localizedStandardCompare($1.name) == .orderedAscending
+        }
+    }
 }

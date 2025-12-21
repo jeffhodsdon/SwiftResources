@@ -16,7 +16,14 @@ enum SwiftEmitter {
         }
 
         var bundleExpression: String {
-            bundleOverride ?? "bundle"
+            guard let override = bundleOverride else {
+                return "bundle"
+            }
+            // Expand shorthand .module to Bundle.module for proper type inference
+            if override == ".module" {
+                return "Bundle.module"
+            }
+            return override
         }
     }
 
@@ -201,9 +208,16 @@ enum SwiftEmitter {
         output += "    // MARK: - Fonts\n\n"
         output += "    \(access)enum fonts {\n"
 
+        // Add static registration trigger - fonts are registered when enum is first accessed
+        if configuration.registerFonts {
+            output += "        private static let _register: Void = { registerFonts() }()\n\n"
+        }
+
         for font in fonts {
             let identifier = NameSanitizer.sanitize(font.postScriptName)
-            output += "        \(access)static let \(identifier) = FontResource(fontName: \"\(font.postScriptName)\", bundle: \(bundle))\n"
+            // Touch _register to ensure fonts are registered before first use
+            let registerTouch = configuration.registerFonts ? "_ = _register; " : ""
+            output += "        \(access)static var \(identifier): FontResource { \(registerTouch)return FontResource(fontName: \"\(font.postScriptName)\", bundle: \(bundle)) }\n"
         }
 
         output += "    }\n"

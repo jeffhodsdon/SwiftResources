@@ -3,7 +3,7 @@
 
 """Providers for SwiftResources."""
 
-ResourceModuleInfo = provider(
+SwiftResourceInfo = provider(
     doc = "Exposes resource module info for tooling integration.",
     fields = {
         "module_name": "Name of the resource module.",
