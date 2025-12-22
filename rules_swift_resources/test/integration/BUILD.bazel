@@ -3,14 +3,14 @@
 
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
-load("//swift_resources:defs.bzl", "swift_resources_generate", "swift_resources_library")
+load("//rules_swift_resources:defs.bzl", "swift_resources_generate", "swift_resources_library")
 
 # Test: Generate code and compare to golden file
 swift_resources_generate(
     name = "generate_all_resources",
-    fonts = ["//swift_resources/test/fixtures:fonts"],
-    images = ["//swift_resources/test/fixtures:images"],
-    files = ["//swift_resources/test/fixtures:data"],
+    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
+    images = ["//rules_swift_resources/test/fixtures:images"],
+    files = ["//rules_swift_resources/test/fixtures:data"],
     module_name = "TestResources",
     out = "Generated.swift",
 )
@@ -24,7 +24,7 @@ diff_test(
 # Test: Generate with public access level
 swift_resources_generate(
     name = "generate_public",
-    fonts = ["//swift_resources/test/fixtures:fonts"],
+    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
     access_level = "public",
     module_name = "PublicResources",
     out = "PublicResources.swift",
@@ -38,7 +38,7 @@ build_test(
 # Test: Generate with bundle override
 swift_resources_generate(
     name = "generate_bundle_override",
-    fonts = ["//swift_resources/test/fixtures:fonts"],
+    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
     bundle = ".module",
     module_name = "ModuleResources",
     out = "ModuleResources.swift",
@@ -52,9 +52,9 @@ build_test(
 # Test: swift_resources_library macro compiles
 swift_resources_library(
     name = "compiled_resources",
-    fonts = ["//swift_resources/test/fixtures:fonts"],
-    images = ["//swift_resources/test/fixtures:images"],
-    files = ["//swift_resources/test/fixtures:data"],
+    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
+    images = ["//rules_swift_resources/test/fixtures:images"],
+    files = ["//rules_swift_resources/test/fixtures:data"],
     module_name = "CompiledResources",
     access_level = "public",
 )

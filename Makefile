@@ -8,7 +8,7 @@ test-swift:
 	swift test
 
 test-bazel:
-	bazel test //swift_resources/test:all_tests
+	bazel test //rules_swift_resources/test:all_tests
 
 build:
 	swift build

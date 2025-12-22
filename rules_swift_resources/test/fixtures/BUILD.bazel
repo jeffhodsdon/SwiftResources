@@ -7,7 +7,7 @@ filegroup(
         ["fonts/**/*.ttf", "fonts/**/*.otf"],
         allow_empty = True,
     ),
-    visibility = ["//swift_resources/test:__subpackages__"],
+    visibility = ["//rules_swift_resources/test:__subpackages__"],
 )
 
 filegroup(
@@ -16,11 +16,11 @@ filegroup(
         ["images/**/*.png", "images/**/*.jpg", "images/**/*.pdf"],
         allow_empty = True,
     ),
-    visibility = ["//swift_resources/test:__subpackages__"],
+    visibility = ["//rules_swift_resources/test:__subpackages__"],
 )
 
 filegroup(
     name = "data",
     srcs = glob(["data/**/*"]),
-    visibility = ["//swift_resources/test:__subpackages__"],
+    visibility = ["//rules_swift_resources/test:__subpackages__"],
 )

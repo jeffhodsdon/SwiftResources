@@ -134,7 +134,7 @@ swift_resources_generate = rule(
             doc = "Output Swift file",
         ),
         "_generator": attr.label(
-            default = "@swift_resources//:sr",
+            default = "@rules_swift_resources//:sr",
             executable = True,
             cfg = "exec",
         ),

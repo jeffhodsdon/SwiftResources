@@ -21,9 +21,9 @@ Inspired by [R.swift](https://github.com/mac-cain13/R.swift) and [SwiftGen](http
 ### Bazel
 
 ```python
-bazel_dep(name = "swift_resources", version = "0.1.0")
+bazel_dep(name = "rules_swift_resources", version = "0.1.0")
 git_override(
-    module_name = "swift_resources",
+    module_name = "rules_swift_resources",
     remote = "https://github.com/jeffhodsdon/SwiftResources.git",
     tag = "0.1.0",
 )
@@ -46,7 +46,7 @@ sr generate \
 ### Bazel
 
 ```python
-load("@swift_resources//swift_resources:defs.bzl", "swift_resources_library")
+load("@rules_swift_resources//rules_swift_resources:defs.bzl", "swift_resources_library")
 
 swift_resources_library(
     name = "DesignSystemResources",
