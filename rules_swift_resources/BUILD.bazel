@@ -1,7 +1,20 @@
 # Copyright 2025 Jeff Hodsdon
 # SPDX-License-Identifier: Apache-2.0
 
-exports_files([
-    "defs.bzl",
-    "providers.bzl",
-])
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
+bzl_library(
+    name = "providers",
+    srcs = ["providers.bzl"],
+    visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":providers",
+        "@rules_swift//swift:swift",
+    ],
+)
