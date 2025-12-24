@@ -84,7 +84,7 @@ struct FontParserTests {
         let fonts = try FontParser.parse(directories: [fontDir.path])
 
         #expect(fonts.count == 2)
-        let names = fonts.map { $0.postScriptName }
+        let names = fonts.map(\.postScriptName)
         #expect(names.contains("Top"))
         #expect(names.contains("Nested"))
     }

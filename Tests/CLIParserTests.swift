@@ -32,12 +32,6 @@ struct CLIParserTests {
         #expect(config.bundle == ".module")
     }
 
-    @Test("Parses --register-fonts correctly")
-    func registerFonts() throws {
-        let config = try parseGenerateArgs(["--register-fonts"])
-        #expect(config.registerFonts == true)
-    }
-
     @Test("Parses --no-register-fonts correctly")
     func noRegisterFonts() throws {
         let config = try parseGenerateArgs(["--no-register-fonts"])

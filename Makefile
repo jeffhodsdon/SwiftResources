@@ -1,6 +1,6 @@
 # SwiftResources Makefile
 
-.PHONY: test test-swift test-bazel build clean
+.PHONY: test test-swift test-bazel build clean format
 
 test: test-swift test-bazel
 
@@ -16,3 +16,6 @@ build:
 clean:
 	swift package clean
 	bazel clean
+
+format:
+	swiftformat ./Sources ./Tests

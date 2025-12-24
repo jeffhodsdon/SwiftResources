@@ -24,6 +24,11 @@ enum FileParser {
             }
 
             for case let fileURL as URL in enumerator {
+                // Skip files that resolve outside the root directory (symlink protection)
+                guard isContainedWithin(file: fileURL, root: directoryURL) else {
+                    continue
+                }
+
                 // Check it's a regular file (not a directory)
                 guard let resourceValues = try? fileURL
                     .resourceValues(forKeys: [.isRegularFileKey]),
@@ -38,6 +43,13 @@ enum FileParser {
                 let relativePath = standardizedFileURL.path.replacingOccurrences(
                     of: directoryURL.path + "/",
                     with: ""
+                )
+
+                // Validate name and extension are safe for code generation
+                try StringValidator.validate(name, context: "filename '\(relativePath)'")
+                try StringValidator.validate(
+                    ext,
+                    context: "file extension '\(relativePath)'"
                 )
 
                 resources.append(DiscoveredResource(
@@ -56,13 +68,23 @@ enum FileParser {
     /// Parses individual file paths directly.
     /// - Parameter paths: File paths to parse
     /// - Returns: Discovered file resources, sorted by name
-    static func parseFiles(_ paths: [String]) -> [DiscoveredResource] {
+    static func parseFiles(_ paths: [String]) throws -> [DiscoveredResource] {
         var resources = [DiscoveredResource]()
 
         for path in paths {
             let url = URL(fileURLWithPath: path).standardizedFileURL
             let ext = url.pathExtension.lowercased()
             let name = url.deletingPathExtension().lastPathComponent
+
+            // Validate name and extension are safe for code generation
+            try StringValidator.validate(
+                name,
+                context: "filename '\(url.lastPathComponent)'"
+            )
+            try StringValidator.validate(
+                ext,
+                context: "file extension '\(url.lastPathComponent)'"
+            )
 
             resources.append(DiscoveredResource(
                 name: name,
@@ -74,5 +96,13 @@ enum FileParser {
         return resources.sorted {
             $0.name.localizedStandardCompare($1.name) == .orderedAscending
         }
+    }
+
+    /// Validates that a file path is contained within the root directory.
+    /// Prevents symlink-based path traversal attacks.
+    private static func isContainedWithin(file: URL, root: URL) -> Bool {
+        let resolvedFile = file.resolvingSymlinksInPath().standardized.path
+        let resolvedRoot = root.resolvingSymlinksInPath().standardized.path
+        return resolvedFile.hasPrefix(resolvedRoot + "/") || resolvedFile == resolvedRoot
     }
 }

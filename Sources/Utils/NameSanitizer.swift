@@ -59,8 +59,11 @@ enum NameSanitizer {
         // Build lowerCamelCase (preserving internal camelCase, handling leading acronyms)
         var result = segments.enumerated()
             .map { index, segment in
-                // Clean segment: keep only alphanumeric and underscore
-                let cleaned = segment.filter { $0.isLetter || $0.isNumber || $0 == "_" }
+                // Clean segment: keep only ASCII alphanumeric and underscore
+                // Using ASCII-only prevents Unicode homograph attacks
+                let cleaned = segment.filter {
+                    ($0.isASCII && $0.isLetter) || ($0.isASCII && $0.isNumber) || $0 == "_"
+                }
                 guard !cleaned.isEmpty else {
                     return ""
                 }
@@ -70,9 +73,11 @@ enum NameSanitizer {
                     // IBMPlexSans → ibmPlexSans, iOS → ios, XMLParser → xmlParser
                     return lowercaseLeadingAcronym(cleaned)
                 } else {
-                    // Subsequent segments: capitalize first char, lowercase rest for proper camelCase
+                    // Subsequent segments: capitalize first char, lowercase rest for
+                    // proper camelCase
                     // BACKGROUND → Background, Bold → Bold
-                    return cleaned.prefix(1).uppercased() + cleaned.dropFirst().lowercased()
+                    return cleaned.prefix(1).uppercased() + cleaned.dropFirst()
+                        .lowercased()
                 }
             }
             .joined()
@@ -100,13 +105,15 @@ enum NameSanitizer {
     /// - `iOS` → `ios`
     /// - `Regular` → `regular`
     private static func lowercaseLeadingAcronym(_ input: String) -> String {
-        guard !input.isEmpty else { return input }
+        guard !input.isEmpty else {
+            return input
+        }
 
         var chars = Array(input)
         var lastUpperIndex = 0
 
         // Find the last uppercase char before a lowercase char
-        for i in 0..<chars.count {
+        for i in 0 ..< chars.count {
             if chars[i].isUppercase {
                 lastUpperIndex = i
             } else {
@@ -114,22 +121,24 @@ enum NameSanitizer {
             }
         }
 
-        // If all chars are uppercase or only first is uppercase, lowercase all leading uppercase
-        // If there's a transition (e.g., IBMPlexSans), keep the last uppercase before lowercase
-        let lowercaseCount: Int
-        if lastUpperIndex == 0 {
-            // Only first char is uppercase: Regular → regular
-            lowercaseCount = 1
-        } else if lastUpperIndex == chars.count - 1 {
-            // All uppercase: IBM → ibm
-            lowercaseCount = chars.count
-        } else {
-            // Acronym followed by camelCase: IBMPlexSans → ibmPlexSans
-            // Lowercase all but the last uppercase (which starts the next word)
-            lowercaseCount = lastUpperIndex
-        }
+        // If all chars are uppercase or only first is uppercase, lowercase all leading
+        // uppercase
+        // If there's a transition (e.g., IBMPlexSans), keep the last uppercase before
+        // lowercase
+        let lowercaseCount: Int =
+            if lastUpperIndex == 0 {
+                // Only first char is uppercase: Regular → regular
+                1
+            } else if lastUpperIndex == chars.count - 1 {
+                // All uppercase: IBM → ibm
+                chars.count
+            } else {
+                // Acronym followed by camelCase: IBMPlexSans → ibmPlexSans
+                // Lowercase all but the last uppercase (which starts the next word)
+                lastUpperIndex
+            }
 
-        for i in 0..<lowercaseCount {
+        for i in 0 ..< lowercaseCount {
             chars[i] = Character(chars[i].lowercased())
         }
 

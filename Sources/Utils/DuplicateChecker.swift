@@ -19,10 +19,10 @@ enum DuplicateChecker {
         }
     }
 
-    /// Checks resources for duplicate sanitized identifiers.
+    /// Checks file resources for duplicate sanitized identifiers.
     /// - Parameters:
-    ///   - resources: Resources to check
-    ///   - category: Category name for error messages (e.g., "images", "files")
+    ///   - resources: File resources to check
+    ///   - category: Category name for error messages (typically "files")
     /// - Throws: DuplicateError if duplicates are found
     static func check(resources: [DiscoveredResource], category: String) throws {
         var identifierToPaths = [String: [String]]()
@@ -38,6 +38,54 @@ enum DuplicateChecker {
                     category: category,
                     identifier: identifier,
                     conflictingPaths: paths
+                )
+            }
+        }
+    }
+
+    /// Checks images for duplicate sanitized identifiers.
+    /// - Parameters:
+    ///   - images: Images to check
+    ///   - category: Category name for error messages (typically "images")
+    /// - Throws: DuplicateError if duplicates are found
+    static func check(images: [DiscoveredImage], category: String) throws {
+        var identifierToNames = [String: [String]]()
+
+        for image in images {
+            let identifier = NameSanitizer.sanitize(image.name)
+            identifierToNames[identifier, default: []].append(image.name)
+        }
+
+        for (identifier, names) in identifierToNames {
+            if names.count > 1 {
+                throw DuplicateError(
+                    category: category,
+                    identifier: identifier,
+                    conflictingPaths: names
+                )
+            }
+        }
+    }
+
+    /// Checks colors for duplicate sanitized identifiers.
+    /// - Parameters:
+    ///   - colors: Colors to check
+    ///   - category: Category name for error messages (typically "colors")
+    /// - Throws: DuplicateError if duplicates are found
+    static func check(colors: [DiscoveredColor], category: String) throws {
+        var identifierToNames = [String: [String]]()
+
+        for color in colors {
+            let identifier = NameSanitizer.sanitize(color.name)
+            identifierToNames[identifier, default: []].append(color.name)
+        }
+
+        for (identifier, names) in identifierToNames {
+            if names.count > 1 {
+                throw DuplicateError(
+                    category: category,
+                    identifier: identifier,
+                    conflictingPaths: names
                 )
             }
         }

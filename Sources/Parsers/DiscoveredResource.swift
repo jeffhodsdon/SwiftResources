@@ -3,12 +3,12 @@
 
 import Foundation
 
-/// Represents a discovered resource file (font, image, or arbitrary file).
+/// Represents a discovered arbitrary file resource (data files like .json, .plist, etc.).
 struct DiscoveredResource {
-    /// Filename without extension: "Inter-Bold"
+    /// Filename without extension: "config"
     let name: String
 
-    /// File extension without dot: "ttf"
+    /// File extension without dot: "json"
     let `extension`: String
 
     /// Relative path from input directory, for error messages

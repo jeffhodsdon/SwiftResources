@@ -19,6 +19,7 @@ enum SwiftEmitter {
             guard let override = bundleOverride else {
                 return "bundle"
             }
+
             // Expand shorthand .module to Bundle.module for proper type inference
             if override == ".module" {
                 return "Bundle.module"
@@ -30,7 +31,8 @@ enum SwiftEmitter {
     /// Generates Swift source code for the given resources.
     static func emit(
         fonts: [DiscoveredFont],
-        images: [DiscoveredResource],
+        images: [DiscoveredImage],
+        colors: [DiscoveredColor],
         files: [DiscoveredResource],
         configuration: Configuration
     ) -> String {
@@ -65,6 +67,9 @@ enum SwiftEmitter {
         if !images.isEmpty {
             output += emitImageResourceStruct(configuration: configuration)
         }
+        if !colors.isEmpty {
+            output += emitColorResourceStruct(configuration: configuration)
+        }
         if !files.isEmpty {
             output += emitFileResourceStruct(configuration: configuration)
         }
@@ -76,12 +81,15 @@ enum SwiftEmitter {
         if !images.isEmpty {
             output += emitImagesEnum(images: images, configuration: configuration)
         }
+        if !colors.isEmpty {
+            output += emitColorsEnum(colors: colors, configuration: configuration)
+        }
         if !files.isEmpty {
             output += emitFilesEnum(files: files, configuration: configuration)
         }
 
         // Font registration
-        if configuration.registerFonts && !fonts.isEmpty {
+        if configuration.registerFonts, !fonts.isEmpty {
             output += emitRegisterFonts(fonts: fonts, configuration: configuration)
         }
 
@@ -179,6 +187,42 @@ enum SwiftEmitter {
         return output
     }
 
+    private static func emitColorResourceStruct(configuration: Configuration) -> String {
+        let access = configuration.access
+        var output = "\n"
+        output += "    // MARK: - Color Resource\n\n"
+        output += "    \(access)struct ColorResource: Sendable, Hashable {\n"
+        output += "        \(access)let name: String\n"
+        output += "        \(access)let bundle: Bundle\n"
+
+        // UIKit accessor
+        output += "\n"
+        output += "        #if canImport(UIKit)\n"
+        output += "        \(access)var uiColor: UIColor? {\n"
+        output += "            UIColor(named: name, in: bundle, compatibleWith: nil)\n"
+        output += "        }\n"
+        output += "        #endif\n"
+
+        // AppKit accessor
+        output += "\n"
+        output += "        #if canImport(AppKit) && !targetEnvironment(macCatalyst)\n"
+        output += "        \(access)var nsColor: NSColor? {\n"
+        output += "            NSColor(named: name, bundle: bundle)\n"
+        output += "        }\n"
+        output += "        #endif\n"
+
+        // SwiftUI accessor
+        output += "\n"
+        output += "        #if canImport(SwiftUI)\n"
+        output += "        \(access)var color: Color {\n"
+        output += "            Color(name, bundle: bundle)\n"
+        output += "        }\n"
+        output += "        #endif\n"
+
+        output += "    }\n"
+        return output
+    }
+
     private static func emitFileResourceStruct(configuration: Configuration) -> String {
         let access = configuration.access
         var output = "\n"
@@ -208,7 +252,8 @@ enum SwiftEmitter {
         output += "    // MARK: - Fonts\n\n"
         output += "    \(access)enum fonts {\n"
 
-        // Add static registration trigger - fonts are registered when enum is first accessed
+        // Add static registration trigger - fonts are registered when enum is first
+        // accessed
         if configuration.registerFonts {
             output += "        private static let _register: Void = { registerFonts() }()\n\n"
         }
@@ -225,7 +270,7 @@ enum SwiftEmitter {
     }
 
     private static func emitImagesEnum(
-        images: [DiscoveredResource],
+        images: [DiscoveredImage],
         configuration: Configuration
     ) -> String {
         let access = configuration.access
@@ -237,6 +282,25 @@ enum SwiftEmitter {
         for image in images {
             let identifier = NameSanitizer.sanitize(image.name)
             output += "        \(access)static let \(identifier) = ImageResource(name: \"\(image.name)\", bundle: \(bundle))\n"
+        }
+
+        output += "    }\n"
+        return output
+    }
+
+    private static func emitColorsEnum(
+        colors: [DiscoveredColor],
+        configuration: Configuration
+    ) -> String {
+        let access = configuration.access
+        let bundle = configuration.bundleExpression
+        var output = "\n"
+        output += "    // MARK: - Colors\n\n"
+        output += "    \(access)enum colors {\n"
+
+        for color in colors {
+            let identifier = NameSanitizer.sanitize(color.name)
+            output += "        \(access)static let \(identifier) = ColorResource(name: \"\(color.name)\", bundle: \(bundle))\n"
         }
 
         output += "    }\n"

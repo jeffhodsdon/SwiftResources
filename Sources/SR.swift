@@ -66,12 +66,12 @@ struct SR {
           --fonts <dir>         Directories containing font files (.ttf, .otf) (repeatable)
           --images <dir>        Directories containing image files (repeatable)
           --files <dir>         Directories containing arbitrary files (repeatable)
+          --xcassets <dir>      Asset catalog directories (.xcassets) (repeatable)
           --output <path>       Output path for generated Swift file (default: stdout)
           --module-name <name>  Name of the generated enum namespace (default: Resources)
           --access-level <lvl>  Access level: public or internal (default: internal)
           --bundle <expr>       Bundle override (e.g., .module, .main)
-          --register-fonts      Generate registerFonts() function (default)
-          --no-register-fonts   Skip registerFonts() function
+          --no-register-fonts   Skip registerFonts() generation (enabled by default)
           --help, -h            Show help information
         """)
     }
@@ -84,12 +84,13 @@ struct SR {
 // MARK: - Argument Parsing
 
 struct GenerateConfig {
-    var fonts: [String] = []        // directories
-    var images: [String] = []       // directories
-    var files: [String] = []        // directories
-    var fontFiles: [String] = []    // individual file paths
-    var imageFiles: [String] = []   // individual file paths
-    var filePaths: [String] = []    // individual file paths
+    var fonts: [String] = [] // directories
+    var images: [String] = [] // directories
+    var files: [String] = [] // directories
+    var xcassets: [String] = [] // .xcassets directories
+    var fontFiles: [String] = [] // individual file paths
+    var imageFiles: [String] = [] // individual file paths
+    var filePaths: [String] = [] // individual file paths
     var output: String?
     var moduleName: String = "Resources"
     var accessLevel: String = "internal"
@@ -99,10 +100,50 @@ struct GenerateConfig {
 
 struct CLIError: LocalizedError {
     let message: String
+
     var errorDescription: String? { message }
 
     init(_ message: String) {
         self.message = message
+    }
+}
+
+// MARK: - CLI Parameter Validation
+
+/// Valid Swift identifier pattern: starts with letter or underscore, followed by
+/// alphanumerics/underscores
+private let swiftIdentifierPattern = try! NSRegularExpression(
+    pattern: "^[a-zA-Z_][a-zA-Z0-9_]*$"
+)
+
+/// Validates module name is a valid Swift identifier.
+func validateModuleName(_ name: String) throws {
+    let range = NSRange(name.startIndex..., in: name)
+    guard swiftIdentifierPattern.firstMatch(in: name, range: range) != nil else {
+        throw CLIError(
+            "Invalid module name '\(name)': must be a valid Swift identifier (letters, digits, underscores; cannot start with digit)"
+        )
+    }
+}
+
+/// Safe bundle expression patterns (allowlist approach).
+private let safeBundlePatterns: [NSRegularExpression] = [
+    try! NSRegularExpression(pattern: "^\\.module$"),
+    try! NSRegularExpression(pattern: "^\\.main$"),
+    try! NSRegularExpression(pattern: "^Bundle\\.[a-zA-Z_][a-zA-Z0-9_]*$"),
+    try! NSRegularExpression(pattern: "^bundle$"),
+]
+
+/// Validates bundle expression against safe patterns.
+func validateBundleExpression(_ expr: String) throws {
+    let range = NSRange(expr.startIndex..., in: expr)
+    let isValid = safeBundlePatterns.contains { pattern in
+        pattern.firstMatch(in: expr, range: range) != nil
+    }
+    guard isValid else {
+        throw CLIError(
+            "Invalid bundle expression '\(expr)': use .module, .main, bundle, or Bundle.<identifier>"
+        )
     }
 }
 
@@ -135,6 +176,13 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
             }
             config.files.append(contentsOf: values)
 
+        case "--xcassets":
+            let values = collectValues(args: args, from: &i)
+            if values.isEmpty {
+                throw CLIError("--xcassets requires at least one directory")
+            }
+            config.xcassets.append(contentsOf: values)
+
         case "--font-file":
             let values = collectValues(args: args, from: &i)
             if values.isEmpty {
@@ -161,6 +209,7 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
             guard i < args.count else {
                 throw CLIError("--output requires a path")
             }
+
             config.output = args[i]
             i += 1
 
@@ -169,6 +218,7 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
             guard i < args.count else {
                 throw CLIError("--module-name requires a name")
             }
+
             config.moduleName = args[i]
             i += 1
 
@@ -177,6 +227,7 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
             guard i < args.count else {
                 throw CLIError("--access-level requires a value")
             }
+
             config.accessLevel = args[i]
             i += 1
 
@@ -185,11 +236,8 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
             guard i < args.count else {
                 throw CLIError("--bundle requires a value")
             }
-            config.bundle = args[i]
-            i += 1
 
-        case "--register-fonts":
-            config.registerFonts = true
+            config.bundle = args[i]
             i += 1
 
         case "--no-register-fonts":
@@ -206,10 +254,10 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
 
 /// Collects values until the next option (starting with --)
 func collectValues(args: [String], from index: inout Int) -> [String] {
-    var values: [String] = []
+    var values = [String]()
     index += 1
 
-    while index < args.count && !args[index].hasPrefix("--") {
+    while index < args.count, !args[index].hasPrefix("--") {
         values.append(args[index])
         index += 1
     }
@@ -222,12 +270,22 @@ func collectValues(args: [String], from index: inout Int) -> [String] {
 func generate(config: GenerateConfig) throws {
     // Validate access level
     guard config.accessLevel == "public" || config.accessLevel == "internal" else {
-        throw CLIError("Invalid access level '\(config.accessLevel)'. Must be: public or internal")
+        throw CLIError(
+            "Invalid access level '\(config.accessLevel)'. Must be: public or internal"
+        )
+    }
+
+    // Validate module name is a safe Swift identifier
+    try validateModuleName(config.moduleName)
+
+    // Validate bundle expression if provided
+    if let bundle = config.bundle {
+        try validateBundleExpression(bundle)
     }
 
     // Validate directories exist
     let fileManager = FileManager.default
-    for dir in config.fonts + config.images + config.files {
+    for dir in config.fonts + config.images + config.files + config.xcassets {
         var isDirectory: ObjCBool = false
         if !fileManager.fileExists(atPath: dir, isDirectory: &isDirectory) {
             throw CLIError("Directory not found: \(dir)")
@@ -243,25 +301,45 @@ func generate(config: GenerateConfig) throws {
     var fileResources = try FileParser.parse(directories: config.files)
 
     // Parse individual file paths
-    fontResources.append(contentsOf: try FontParser.parseFiles(config.fontFiles))
-    imageResources.append(contentsOf: ImageParser.parseFiles(config.imageFiles))
-    fileResources.append(contentsOf: FileParser.parseFiles(config.filePaths))
+    try fontResources.append(contentsOf: FontParser.parseFiles(config.fontFiles))
+    try imageResources.append(contentsOf: ImageParser.parseFiles(config.imageFiles))
+    try fileResources.append(contentsOf: FileParser.parseFiles(config.filePaths))
+
+    // Parse asset catalogs and merge with raw resources
+    var colorResources = [DiscoveredColor]()
+    if !config.xcassets.isEmpty {
+        let (xcImages, xcColors) = try AssetCatalogParser.parse(catalogs: config.xcassets)
+        imageResources.append(contentsOf: xcImages)
+        colorResources.append(contentsOf: xcColors)
+    }
 
     // Warn if directories specified but no resources found
     if !config.fonts.isEmpty, fontResources.isEmpty {
-        FileHandle.standardError.write("Warning: No font files (.ttf, .otf) found\n".data(using: .utf8)!)
+        FileHandle.standardError
+            .write("Warning: No font files (.ttf, .otf) found\n".data(using: .utf8)!)
     }
     if !config.images.isEmpty, imageResources.isEmpty {
-        FileHandle.standardError.write("Warning: No image files found\n".data(using: .utf8)!)
+        FileHandle.standardError
+            .write("Warning: No image files found\n".data(using: .utf8)!)
     }
     if !config.files.isEmpty, fileResources.isEmpty {
         FileHandle.standardError.write("Warning: No files found\n".data(using: .utf8)!)
     }
+    if !config.xcassets.isEmpty, colorResources.isEmpty {
+        // Only warn about colors - images may come from --images flag
+        let xcImagesEmpty = imageResources.isEmpty
+        if xcImagesEmpty {
+            FileHandle.standardError
+                .write("Warning: No images or colors found in asset catalogs\n"
+                    .data(using: .utf8)!)
+        }
+    }
 
     // Check for duplicates
     try DuplicateChecker.check(fonts: fontResources, category: "fonts")
-    try DuplicateChecker.check(resources: imageResources, category: "images")
+    try DuplicateChecker.check(images: imageResources, category: "images")
     try DuplicateChecker.check(resources: fileResources, category: "files")
+    try DuplicateChecker.check(colors: colorResources, category: "colors")
 
     // Build configuration
     let emitterConfig = SwiftEmitter.Configuration(
@@ -275,6 +353,7 @@ func generate(config: GenerateConfig) throws {
     let code = SwiftEmitter.emit(
         fonts: fontResources,
         images: imageResources,
+        colors: colorResources,
         files: fileResources,
         configuration: emitterConfig
     )

@@ -29,6 +29,11 @@ enum FontParser {
             }
 
             for case let fileURL as URL in enumerator {
+                // Skip files that resolve outside the root directory (symlink protection)
+                guard isContainedWithin(file: fileURL, root: directoryURL) else {
+                    continue
+                }
+
                 let ext = fileURL.pathExtension.lowercased()
                 guard supportedExtensions.contains(ext) else {
                     continue
@@ -45,6 +50,12 @@ enum FontParser {
                 // Extract PostScript name(s) using Core Text
                 let postScriptNames = extractPostScriptNames(from: fileURL)
 
+                // Validate filename is safe for code generation
+                try StringValidator.validate(
+                    fileName,
+                    context: "font filename '\(relativePath)'"
+                )
+
                 if postScriptNames.isEmpty {
                     // Fallback to filename if Core Text fails
                     fonts.append(DiscoveredFont(
@@ -56,6 +67,11 @@ enum FontParser {
                 } else {
                     // Create entry for each font in file (handles .ttc)
                     for postScriptName in postScriptNames {
+                        // Validate PostScript name from font metadata
+                        try StringValidator.validate(
+                            postScriptName,
+                            context: "font PostScript name in '\(relativePath)'"
+                        )
                         fonts.append(DiscoveredFont(
                             postScriptName: postScriptName,
                             fileName: fileName,
@@ -91,6 +107,12 @@ enum FontParser {
             let fileName = url.deletingPathExtension().lastPathComponent
             let postScriptNames = extractPostScriptNames(from: url)
 
+            // Validate filename is safe for code generation
+            try StringValidator.validate(
+                fileName,
+                context: "font filename '\(url.lastPathComponent)'"
+            )
+
             if postScriptNames.isEmpty {
                 fonts.append(DiscoveredFont(
                     postScriptName: fileName,
@@ -100,6 +122,11 @@ enum FontParser {
                 ))
             } else {
                 for postScriptName in postScriptNames {
+                    // Validate PostScript name from font metadata
+                    try StringValidator.validate(
+                        postScriptName,
+                        context: "font PostScript name in '\(url.lastPathComponent)'"
+                    )
                     fonts.append(DiscoveredFont(
                         postScriptName: postScriptName,
                         fileName: fileName,
@@ -111,8 +138,17 @@ enum FontParser {
         }
 
         return fonts.sorted {
-            $0.postScriptName.localizedStandardCompare($1.postScriptName) == .orderedAscending
+            $0.postScriptName
+                .localizedStandardCompare($1.postScriptName) == .orderedAscending
         }
+    }
+
+    /// Validates that a file path is contained within the root directory.
+    /// Prevents symlink-based path traversal attacks.
+    private static func isContainedWithin(file: URL, root: URL) -> Bool {
+        let resolvedFile = file.resolvingSymlinksInPath().standardized.path
+        let resolvedRoot = root.resolvingSymlinksInPath().standardized.path
+        return resolvedFile.hasPrefix(resolvedRoot + "/") || resolvedFile == resolvedRoot
     }
 
     /// Extracts PostScript names from a font file using Core Text.

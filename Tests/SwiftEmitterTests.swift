@@ -24,12 +24,8 @@ struct SwiftEmitterTests {
     ]
 
     let sampleImages = [
-        DiscoveredResource(name: "logo", extension: "png", relativePath: "logo.png"),
-        DiscoveredResource(
-            name: "hero-background",
-            extension: "png",
-            relativePath: "hero-background.png"
-        ),
+        DiscoveredImage(name: "logo"),
+        DiscoveredImage(name: "hero-background"),
     ]
 
     let sampleFiles = [
@@ -62,6 +58,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -81,6 +78,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -96,6 +94,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: sampleImages,
+            colors: [],
             files: [],
             configuration: config
         )
@@ -113,6 +112,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -128,6 +128,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -142,6 +143,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: sampleImages,
+            colors: [],
             files: [],
             configuration: config
         )
@@ -157,6 +159,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -170,6 +173,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: sampleImages,
+            colors: [],
             files: [],
             configuration: config
         )
@@ -183,6 +187,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: [],
+            colors: [],
             files: sampleFiles,
             configuration: config
         )
@@ -198,6 +203,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -212,6 +218,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: sampleImages,
+            colors: [],
             files: [],
             configuration: config
         )
@@ -226,6 +233,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: [],
+            colors: [],
             files: sampleFiles,
             configuration: config
         )
@@ -242,6 +250,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -257,6 +266,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -274,6 +284,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -290,6 +301,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -304,6 +316,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -317,6 +330,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: sampleImages,
+            colors: [],
             files: [],
             configuration: config
         )
@@ -332,6 +346,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -346,6 +361,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: [],
+            colors: [],
             files: sampleFiles,
             configuration: config
         )
@@ -362,6 +378,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: [],
             images: [],
+            colors: [],
             files: [],
             configuration: config
         )
@@ -381,6 +398,7 @@ struct SwiftEmitterTests {
         let output = SwiftEmitter.emit(
             fonts: sampleFonts,
             images: sampleImages,
+            colors: [],
             files: sampleFiles,
             configuration: config
         )
