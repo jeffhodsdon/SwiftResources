@@ -1,7 +1,9 @@
 // Copyright 2025 Jeff Hodsdon
 // SPDX-License-Identifier: Apache-2.0
 
+#if canImport(CoreText)
 import CoreText
+#endif
 import Foundation
 
 /// Discovers font files (.ttf, .otf) and extracts PostScript names via Core Text.
@@ -116,7 +118,9 @@ enum FontParser {
     /// Extracts PostScript names from a font file using Core Text.
     /// - Parameter url: URL to the font file
     /// - Returns: Array of PostScript names (multiple for .ttc files)
+    /// - Note: On non-Apple platforms, returns empty array (triggering filename fallback)
     private static func extractPostScriptNames(from url: URL) -> [String] {
+        #if canImport(CoreText)
         guard let descriptors =
             CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor]
         else {
@@ -131,5 +135,9 @@ enum FontParser {
         }
 
         return names
+        #else
+        // CoreText not available on this platform, use filename fallback
+        return []
+        #endif
     }
 }

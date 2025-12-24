@@ -107,6 +107,7 @@ enum TestResources {
     // MARK: - Font Registration
 
     static func registerFonts() {
+        #if canImport(CoreText)
         let fontFiles: [(name: String, ext: String)] = [
             ("Lilex-Regular", "ttf"),
         ]
@@ -114,5 +115,6 @@ enum TestResources {
             guard let url = bundle.url(forResource: font.name, withExtension: font.ext) else { continue }
             CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         }
+        #endif
     }
 }

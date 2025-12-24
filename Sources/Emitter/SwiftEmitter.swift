@@ -271,6 +271,7 @@ enum SwiftEmitter {
         var output = "\n"
         output += "    // MARK: - Font Registration\n\n"
         output += "    \(access)static func registerFonts() {\n"
+        output += "        #if canImport(CoreText)\n"
         output += "        let fontFiles: [(name: String, ext: String)] = [\n"
 
         // Use unique file names (not PostScript names) for registration
@@ -289,6 +290,7 @@ enum SwiftEmitter {
         output += "            guard let url = \(bundle).url(forResource: font.name, withExtension: font.ext) else { continue }\n"
         output += "            CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)\n"
         output += "        }\n"
+        output += "        #endif\n"
         output += "    }\n"
         return output
     }

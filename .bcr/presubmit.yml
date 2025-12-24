@@ -1,0 +1,25 @@
+matrix:
+  bazel: [7.x, 8.x]
+tasks:
+  # Verify Starlark rules load on all platforms
+  verify_rules_linux:
+    name: Verify rules load (Linux)
+    platform: debian10
+    bazel: ${{ bazel }}
+    build_targets:
+      - "@rules_swift_resources//rules_swift_resources:defs"
+      - "@rules_swift_resources//rules_swift_resources:providers"
+  verify_rules_macos:
+    name: Verify rules load (macOS)
+    platform: macos
+    bazel: ${{ bazel }}
+    build_targets:
+      - "@rules_swift_resources//rules_swift_resources:defs"
+      - "@rules_swift_resources//rules_swift_resources:providers"
+  # Integration tests require macOS (Swift compilation with Apple frameworks)
+  run_tests:
+    name: Run integration tests
+    platform: macos
+    bazel: ${{ bazel }}
+    test_targets:
+      - "@rules_swift_resources//rules_swift_resources/test:all_tests"
