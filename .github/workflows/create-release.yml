@@ -1,0 +1,28 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag for the release (e.g., 1.0.0)"
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create release
+        env:
+          TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tar czf rules_swift_resources.${TAG}.tar.gz --exclude='.git' .
+          gh release create "${TAG}" \
+            --title "${TAG}" \
+            --target ${{ github.ref_name }} \
+            --generate-notes \
+            rules_swift_resources.${TAG}.tar.gz
