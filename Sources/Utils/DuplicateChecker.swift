@@ -114,4 +114,28 @@ enum DuplicateChecker {
             }
         }
     }
+
+    /// Checks localized strings for duplicate sanitized identifiers.
+    /// - Parameters:
+    ///   - strings: Strings to check
+    ///   - category: Category name for error messages (e.g., "strings.localizable")
+    /// - Throws: DuplicateError if duplicates are found
+    static func check(strings: [DiscoveredString], category: String) throws {
+        var identifierToKeys = [String: [String]]()
+
+        for string in strings {
+            let identifier = StringIdentifierGenerator.generateIdentifier(for: string)
+            identifierToKeys[identifier, default: []].append(string.key)
+        }
+
+        for (identifier, keys) in identifierToKeys {
+            if keys.count > 1 {
+                throw DuplicateError(
+                    category: category,
+                    identifier: identifier,
+                    conflictingPaths: keys
+                )
+            }
+        }
+    }
 }

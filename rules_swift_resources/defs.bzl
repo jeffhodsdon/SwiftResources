@@ -12,7 +12,7 @@ load(":providers.bzl", "SwiftResourceInfo")
 
 def _swift_resources_library_wrapper_impl(ctx):
     """Wraps swift_library and adds SwiftResourceInfo for tooling integration."""
-    resource_files = ctx.files.fonts + ctx.files.images + ctx.files.files
+    resource_files = ctx.files.fonts + ctx.files.images + ctx.files.files + ctx.files.xcassets + ctx.files.strings
 
     providers = [
         SwiftResourceInfo(
@@ -38,6 +38,8 @@ _swift_resources_library_wrapper = rule(
         "files": attr.label_list(allow_files = True),
         "fonts": attr.label_list(allow_files = True),
         "images": attr.label_list(allow_files = True),
+        "xcassets": attr.label_list(allow_files = True),
+        "strings": attr.label_list(allow_files = True),
         "inner_lib": attr.label(
             mandatory = True,
             providers = [SwiftInfo],
@@ -74,6 +76,21 @@ def _swift_resources_generate_impl(ctx):
         for f in ctx.files.files:
             args.add(f.path)
 
+    # Add xcassets directories
+    if ctx.files.xcassets:
+        args.add("--xcassets")
+        for f in ctx.files.xcassets:
+            args.add(f.path)
+
+    # Add string files (.xcstrings or .strings)
+    if ctx.files.strings:
+        args.add("--strings")
+        for f in ctx.files.strings:
+            args.add(f.path)
+
+    if ctx.attr.development_region:
+        args.add("--development-region", ctx.attr.development_region)
+
     args.add("--output", output)
     args.add("--module-name", ctx.attr.module_name)
     args.add("--access-level", ctx.attr.access_level)
@@ -86,7 +103,7 @@ def _swift_resources_generate_impl(ctx):
 
     # Run the generator
     ctx.actions.run(
-        inputs = ctx.files.fonts + ctx.files.images + ctx.files.files,
+        inputs = ctx.files.fonts + ctx.files.images + ctx.files.files + ctx.files.xcassets + ctx.files.strings,
         outputs = [output],
         executable = ctx.executable._generator,
         arguments = [args],
@@ -112,6 +129,17 @@ swift_resources_generate = rule(
         "files": attr.label_list(
             allow_files = True,
             doc = "Arbitrary files",
+        ),
+        "xcassets": attr.label_list(
+            allow_files = [".xcassets"],
+            doc = "Asset catalog directories (.xcassets)",
+        ),
+        "strings": attr.label_list(
+            allow_files = [".xcstrings", ".strings"],
+            doc = "String catalogs (.xcstrings) or legacy .strings files",
+        ),
+        "development_region": attr.string(
+            doc = "Source language for .strings files (auto-detected for .xcstrings)",
         ),
         "module_name": attr.string(
             default = "Resources",
@@ -147,6 +175,9 @@ def swift_resources_library(
         fonts = [],
         images = [],
         files = [],
+        xcassets = [],
+        strings = [],
+        development_region = None,
         module_name = "Resources",
         access_level = "internal",
         bundle = None,
@@ -166,6 +197,9 @@ def swift_resources_library(
         fonts: List of font files (.ttf, .otf).
         images: List of image files.
         files: List of arbitrary files.
+        xcassets: List of asset catalog directories (.xcassets).
+        strings: List of string catalogs (.xcstrings) or .strings files.
+        development_region: Source language for .strings files (auto-detected for .xcstrings).
         module_name: Name of the generated enum namespace.
         access_level: Access level (public or internal).
         bundle: Bundle expression. Default: auto-detect via BundleFinder.
@@ -184,6 +218,9 @@ def swift_resources_library(
         fonts = fonts,
         images = images,
         files = files,
+        xcassets = xcassets,
+        strings = strings,
+        development_region = development_region,
         module_name = module_name,
         access_level = access_level,
         bundle = bundle,
@@ -194,7 +231,7 @@ def swift_resources_library(
     )
 
     # Compile Swift library (inner target)
-    all_resources = fonts + images + files
+    all_resources = fonts + images + files + xcassets + strings
     inner_name = name + "_lib"
 
     swift_library(
@@ -214,6 +251,8 @@ def swift_resources_library(
         files = files,
         fonts = fonts,
         images = images,
+        xcassets = xcassets,
+        strings = strings,
         inner_lib = ":" + inner_name,
         module_name = module_name,
         visibility = visibility,

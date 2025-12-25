@@ -63,16 +63,18 @@ struct SR {
         USAGE: sr generate [options]
 
         OPTIONS:
-          --fonts <dir>         Directories containing font files (.ttf, .otf) (repeatable)
-          --images <dir>        Directories containing image files (repeatable)
-          --files <dir>         Directories containing arbitrary files (repeatable)
-          --xcassets <dir>      Asset catalog directories (.xcassets) (repeatable)
-          --output <path>       Output path for generated Swift file (default: stdout)
-          --module-name <name>  Name of the generated enum namespace (default: Resources)
-          --access-level <lvl>  Access level: public or internal (default: internal)
-          --bundle <expr>       Bundle override (e.g., .module, .main)
-          --no-register-fonts   Skip registerFonts() generation (enabled by default)
-          --help, -h            Show help information
+          --fonts <dir>             Directories containing font files (.ttf, .otf) (repeatable)
+          --images <dir>            Directories containing image files (repeatable)
+          --files <dir>             Directories containing arbitrary files (repeatable)
+          --xcassets <dir>          Asset catalog directories (.xcassets) (repeatable)
+          --strings <path>          String catalog (.xcstrings) or strings file (.strings) (repeatable)
+          --development-region <code>  Source language code (auto-detected from .xcstrings)
+          --output <path>           Output path for generated Swift file (default: stdout)
+          --module-name <name>      Name of the generated enum namespace (default: Resources)
+          --access-level <lvl>      Access level: public or internal (default: internal)
+          --bundle <expr>           Bundle override (e.g., .module, .main)
+          --no-register-fonts       Skip registerFonts() generation (enabled by default)
+          --help, -h                Show help information
         """)
     }
 
@@ -88,6 +90,7 @@ struct GenerateConfig {
     var images: [String] = [] // directories
     var files: [String] = [] // directories
     var xcassets: [String] = [] // .xcassets directories
+    var strings: [String] = [] // .xcstrings or .strings files
     var fontFiles: [String] = [] // individual file paths
     var imageFiles: [String] = [] // individual file paths
     var filePaths: [String] = [] // individual file paths
@@ -96,6 +99,7 @@ struct GenerateConfig {
     var accessLevel: String = "internal"
     var bundle: String?
     var registerFonts: Bool = true
+    var developmentRegion: String? // source language for .strings files
 }
 
 struct CLIError: LocalizedError {
@@ -182,6 +186,22 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
                 throw CLIError("--xcassets requires at least one directory")
             }
             config.xcassets.append(contentsOf: values)
+
+        case "--strings":
+            let values = collectValues(args: args, from: &i)
+            if values.isEmpty {
+                throw CLIError("--strings requires at least one file path")
+            }
+            config.strings.append(contentsOf: values)
+
+        case "--development-region":
+            i += 1
+            guard i < args.count else {
+                throw CLIError("--development-region requires a language code")
+            }
+
+            config.developmentRegion = args[i]
+            i += 1
 
         case "--font-file":
             let values = collectValues(args: args, from: &i)
@@ -313,6 +333,31 @@ func generate(config: GenerateConfig) throws {
         colorResources.append(contentsOf: xcColors)
     }
 
+    // Parse string catalogs and strings files
+    var stringResources = [String: [DiscoveredString]]()
+    for stringPath in config.strings {
+        let ext = URL(fileURLWithPath: stringPath).pathExtension.lowercased()
+        if ext == "xcstrings" {
+            // Parse xcstrings file
+            let result = try StringCatalogParser.parse(file: stringPath)
+            stringResources[result.tableName, default: []]
+                .append(contentsOf: result.strings)
+        } else if ext == "strings" {
+            // Parse legacy .strings file
+            let strings = try StringsFileParser.parse(
+                file: stringPath,
+                developmentRegion: config.developmentRegion
+            )
+            if let first = strings.first {
+                stringResources[first.tableName, default: []].append(contentsOf: strings)
+            }
+        } else {
+            throw CLIError(
+                "Unsupported string file format: \(stringPath). Use .xcstrings or .strings"
+            )
+        }
+    }
+
     // Warn if directories specified but no resources found
     if !config.fonts.isEmpty, fontResources.isEmpty {
         FileHandle.standardError
@@ -334,12 +379,19 @@ func generate(config: GenerateConfig) throws {
                     .data(using: .utf8)!)
         }
     }
+    if !config.strings.isEmpty, stringResources.isEmpty {
+        FileHandle.standardError
+            .write("Warning: No strings found in string catalogs\n".data(using: .utf8)!)
+    }
 
     // Check for duplicates
     try DuplicateChecker.check(fonts: fontResources, category: "fonts")
     try DuplicateChecker.check(images: imageResources, category: "images")
     try DuplicateChecker.check(resources: fileResources, category: "files")
     try DuplicateChecker.check(colors: colorResources, category: "colors")
+    for (tableName, strings) in stringResources {
+        try DuplicateChecker.check(strings: strings, category: "strings.\(tableName)")
+    }
 
     // Build configuration
     let emitterConfig = SwiftEmitter.Configuration(
@@ -355,6 +407,7 @@ func generate(config: GenerateConfig) throws {
         images: imageResources,
         colors: colorResources,
         files: fileResources,
+        strings: stringResources,
         configuration: emitterConfig
     )
 

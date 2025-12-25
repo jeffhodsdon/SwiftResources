@@ -21,6 +21,12 @@ enum StringValidator {
         charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_. /"
     )
 
+    /// Characters allowed in localized string keys and values.
+    /// Includes format specifier characters needed for printf-style strings.
+    private static let allowedStringCharacters: CharacterSet = .init(
+        charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_. /%@$#!?,;:()[]{}*+<>=&|^~`'"
+    )
+
     /// Validates a string contains only allowed characters.
     ///
     /// Permits: ASCII letters, digits, hyphen, underscore, dot, space, forward slash.
@@ -49,5 +55,29 @@ enum StringValidator {
     static func validated(_ string: String, context: String) throws -> String {
         try validate(string, context: context)
         return string
+    }
+
+    /// Validates a localized string key or value.
+    ///
+    /// More permissive than `validate()` - allows format specifier characters
+    /// like `%`, `@`, `$` that are needed for printf-style localized strings.
+    ///
+    /// - Parameters:
+    ///   - string: The string to validate
+    ///   - context: Description for error messages
+    /// - Throws: UnsafeStringError if validation fails
+    static func validateString(_ string: String, context: String) throws {
+        for char in string {
+            guard let scalar = char.unicodeScalars.first,
+                  char.unicodeScalars.count == 1,
+                  allowedStringCharacters.contains(scalar)
+            else {
+                throw UnsafeStringError(
+                    value: string,
+                    reason: "contains disallowed character '\(char)'",
+                    context: context
+                )
+            }
+        }
     }
 }

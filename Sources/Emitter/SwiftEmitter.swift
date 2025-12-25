@@ -34,6 +34,7 @@ enum SwiftEmitter {
         images: [DiscoveredImage],
         colors: [DiscoveredColor],
         files: [DiscoveredResource],
+        strings: [String: [DiscoveredString]] = [:],
         configuration: Configuration
     ) -> String {
         var output = ""
@@ -86,6 +87,11 @@ enum SwiftEmitter {
         }
         if !files.isEmpty {
             output += emitFilesEnum(files: files, configuration: configuration)
+        }
+
+        // Strings namespace with nested table enums
+        if !strings.isEmpty {
+            output += emitStringsNamespace(strings: strings, configuration: configuration)
         }
 
         // Font registration
@@ -357,5 +363,161 @@ enum SwiftEmitter {
         output += "        #endif\n"
         output += "    }\n"
         return output
+    }
+
+    // MARK: - Strings Emission
+
+    private static func emitStringsNamespace(
+        strings: [String: [DiscoveredString]],
+        configuration: Configuration
+    ) -> String {
+        let access = configuration.access
+        var output = "\n"
+        output += "    // MARK: - Strings\n\n"
+        output += "    \(access)enum strings {\n"
+
+        // Sort table names for deterministic output
+        let sortedTables = strings.keys.sorted()
+
+        for tableName in sortedTables {
+            guard let tableStrings = strings[tableName] else {
+                continue
+            }
+
+            output += emitStringTableEnum(
+                tableName: tableName,
+                strings: tableStrings,
+                configuration: configuration
+            )
+        }
+
+        output += "    }\n"
+        return output
+    }
+
+    private static func emitStringTableEnum(
+        tableName: String,
+        strings: [DiscoveredString],
+        configuration: Configuration
+    ) -> String {
+        let access = configuration.access
+        let bundle = configuration.bundleExpression
+        let tableIdentifier = NameSanitizer.sanitize(tableName)
+
+        var output = "\n"
+        output += "        \(access)enum \(tableIdentifier) {\n"
+
+        // Sort strings by their generated identifier for deterministic output
+        let sortedStrings = strings.sorted { string1, string2 in
+            let id1 = StringIdentifierGenerator.generateIdentifier(for: string1)
+            let id2 = StringIdentifierGenerator.generateIdentifier(for: string2)
+            return id1 < id2
+        }
+
+        for string in sortedStrings {
+            output += emitStringAccessor(
+                string: string,
+                bundle: bundle,
+                configuration: configuration
+            )
+        }
+
+        output += "        }\n"
+        return output
+    }
+
+    private static func emitStringAccessor(
+        string: DiscoveredString,
+        bundle: String,
+        configuration: Configuration
+    ) -> String {
+        let access = configuration.access
+        let identifier = StringIdentifierGenerator.generateIdentifier(for: string)
+        let escapedKey = escapeStringLiteral(string.key)
+        let escapedDefault = escapeStringLiteral(string.defaultValue)
+        let tableName = string.tableName
+
+        var output = ""
+
+        // Add doc comment
+        if let comment = string.comment, !comment.isEmpty {
+            output += "            /// \(comment)\n"
+        } else {
+            // Use default value as doc comment (truncated if long)
+            let truncated = string.defaultValue.count > 60
+                ? String(string.defaultValue.prefix(57)) + "..."
+                : string.defaultValue
+            output += "            /// \(escapeDocComment(truncated))\n"
+        }
+
+        if string.requiresFunction {
+            // Generate function for strings with arguments
+            output += emitStringFunction(
+                string: string,
+                identifier: identifier,
+                escapedKey: escapedKey,
+                escapedDefault: escapedDefault,
+                tableName: tableName,
+                bundle: bundle,
+                access: access
+            )
+        } else {
+            // Generate computed property for simple strings
+            output += "            \(access)static var \(identifier): String {\n"
+            output += "                \(bundle).localizedString(forKey: \"\(escapedKey)\", value: \"\(escapedDefault)\", table: \"\(tableName)\")\n"
+            output += "            }\n"
+        }
+
+        return output
+    }
+
+    private static func emitStringFunction(
+        string: DiscoveredString,
+        identifier: String,
+        escapedKey: String,
+        escapedDefault: String,
+        tableName: String,
+        bundle: String,
+        access: String
+    ) -> String {
+        let labels = StringIdentifierGenerator.generateParameterLabels(for: string)
+
+        // Build parameter list
+        var params = [String]()
+        for (index, arg) in string.arguments.enumerated() {
+            let label = labels[index]
+            let type = arg.specifier.swiftType
+            params.append("_ \(label): \(type)")
+        }
+        let paramList = params.joined(separator: ", ")
+
+        // Build argument list for String(format:)
+        let argList = labels.joined(separator: ", ")
+
+        var output = ""
+        output += "            \(access)static func \(identifier)(\(paramList)) -> String {\n"
+        output += "                String(format: \(bundle).localizedString(forKey: \"\(escapedKey)\", value: \"\(escapedDefault)\", table: \"\(tableName)\"), \(argList))\n"
+        output += "            }\n"
+
+        return output
+    }
+
+    /// Escapes a string for use in a Swift string literal.
+    private static func escapeStringLiteral(_ string: String) -> String {
+        var result = string
+        result = result.replacingOccurrences(of: "\\", with: "\\\\")
+        result = result.replacingOccurrences(of: "\"", with: "\\\"")
+        result = result.replacingOccurrences(of: "\n", with: "\\n")
+        result = result.replacingOccurrences(of: "\r", with: "\\r")
+        result = result.replacingOccurrences(of: "\t", with: "\\t")
+        return result
+    }
+
+    /// Escapes a string for use in a documentation comment.
+    private static func escapeDocComment(_ string: String) -> String {
+        var result = string
+        result = result.replacingOccurrences(of: "\n", with: " ")
+        result = result.replacingOccurrences(of: "\r", with: "")
+        return result
     }
 }

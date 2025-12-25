@@ -17,22 +17,56 @@ Inspired by [R.swift](https://github.com/mac-cain13/R.swift) and [SwiftGen](http
 
 ## Supported Resource Types
 
-| Resource Type | SwiftResources | R.swift | SwiftGen |
-|---------------|:--------------:|:-------:|:--------:|
-| **Fonts** (.ttf, .otf) | ✅ | ✅ | ✅ |
-| **Images** (.png, .jpg, .jpeg, .pdf, .svg, .heic) | ✅ | ✅ | ✅ |
-| **Data Files** (.json, .plist, .xml, .txt, etc.) | ✅ | ✅ | ✅ |
-| **Asset Catalogs** (.xcassets) | ✅ | ✅ | ✅ |
-| **Colors** (from .xcassets) | ✅ | ✅ | ✅ |
-| **Localized Strings** (.strings) | ❌ | ✅ | ✅ |
-| **Storyboards** | ❌ | ✅ | ✅ |
-| **Nibs/XIBs** | ❌ | ✅ | ✅ |
-| **Segues** | ❌ | ✅ | ❌ |
-| **Reusable Cells** | ❌ | ✅ | ❌ |
-| **Core Data Models** | ❌ | ❌ | ✅ |
-| **Plists** | ❌ | ✅ | ✅ |
-| **Info.plist** | ❌ | ✅ | ❌ |
-| **Entitlements** | ❌ | ✅ | ❌ |
+Generated code uses `Resources` as the default namespace (change via `--module-name`).
+
+### Fonts
+
+**Input:** `.ttf`, `.otf`
+
+```swift
+let font = Resources.fonts.interBold.font(size: 16)         // SwiftUI
+let uiFont = Resources.fonts.interBold.uiFont(size: 16)     // UIKit
+let nsFont = Resources.fonts.interBold.nsFont(size: 16)     // AppKit
+```
+
+### Images
+
+**Input:** `.png`, `.jpg`, `.jpeg`, `.pdf`, `.svg`, `.heic`, or imagesets from `.xcassets`
+
+```swift
+let image = Resources.images.logo.image                     // SwiftUI
+let uiImage = Resources.images.logo.uiImage                 // UIKit
+let nsImage = Resources.images.logo.nsImage                 // AppKit
+```
+
+### Colors
+
+**Input:** colorsets from `.xcassets`
+
+```swift
+let color = Resources.colors.primary.color                  // SwiftUI
+let uiColor = Resources.colors.primary.uiColor              // UIKit
+let nsColor = Resources.colors.primary.nsColor              // AppKit
+```
+
+### Files
+
+**Input:** any file type (`.json`, `.plist`, `.xml`, `.txt`, etc.)
+
+```swift
+let url = Resources.files.config.url                        // URL?
+let data = Resources.files.config.data                      // Data?
+```
+
+### Localized Strings
+
+**Input:** `.xcstrings` (String Catalogs) or `.strings`
+
+```swift
+let title = Resources.strings.localizable.welcomeTitle      // Simple string
+let msg = Resources.strings.localizable.greeting("World")   // With argument
+let items = Resources.strings.localizable.itemsCount(5)     // Pluralized
+```
 
 ## Requirements
 
@@ -64,6 +98,7 @@ sr generate \
   --images Resources/Images \
   --xcassets Resources/Assets.xcassets \
   --files Resources/Data \
+  --strings Resources/Localizable.xcstrings \
   --output Generated/Resources.swift \
   --module-name DesignSystem \
   --access-level public
@@ -77,6 +112,8 @@ sr generate \
 | `--images <dir>` | — | Directories containing image files (repeatable) |
 | `--xcassets <dir>` | — | Asset catalog directories (.xcassets) (repeatable) |
 | `--files <dir>` | — | Directories containing data files (repeatable) |
+| `--strings <path>` | — | String catalog (.xcstrings) or .strings files (repeatable) |
+| `--development-region <lang>` | — | Source language for .strings files (auto-detected for .xcstrings) |
 | `--output <path>` | stdout | Output Swift file path |
 | `--module-name <name>` | `Resources` | Generated enum namespace |
 | `--access-level <level>` | `internal` | `public` or `internal` |
@@ -92,34 +129,13 @@ swift_resources_library(
     name = "DesignSystemResources",
     fonts = glob(["Fonts/**/*.ttf"]),
     images = glob(["Images/**/*.png"]),
+    xcassets = glob(["Assets.xcassets/**"]),
+    strings = ["Localizable.xcstrings"],
     module_name = "DesignSystem",
 )
 ```
 
 **Note:** `swift_resources_library` generates a `swift_library` with type-safe accessors—it does not bundle the resource files. Add resources to your `ios_application` or bundle rule separately. This allows you to use resources with type safety in static libraries.
-
-### Generated Code
-
-```swift
-// Fonts — automatically registered on first access
-let uiFont = DesignSystem.fonts.interBold.uiFont(size: 16)     // UIKit
-let nsFont = DesignSystem.fonts.interBold.nsFont(size: 16)     // AppKit
-let font = DesignSystem.fonts.interBold.font(size: 16)         // SwiftUI
-
-// Images (raw files + xcassets merged)
-let uiImage = DesignSystem.images.logo.uiImage                 // UIKit
-let nsImage = DesignSystem.images.logo.nsImage                 // AppKit
-let image = DesignSystem.images.logo.image                     // SwiftUI
-
-// Colors (from xcassets)
-let uiColor = DesignSystem.colors.primary.uiColor              // UIKit
-let nsColor = DesignSystem.colors.primary.nsColor              // AppKit
-let color = DesignSystem.colors.primary.color                  // SwiftUI
-
-// Files
-let url = DesignSystem.files.config.url
-let data = DesignSystem.files.config.data
-```
 
 ## License
 
