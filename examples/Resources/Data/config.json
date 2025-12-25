@@ -1,0 +1,8 @@
+{
+    "appName": "SwiftResources Example",
+    "version": "1.0.0",
+    "features": {
+        "darkMode": true,
+        "analytics": false
+    }
+}

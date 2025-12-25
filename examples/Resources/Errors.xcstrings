@@ -1,0 +1,50 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "error.network": {
+      "comment": "Network connection error",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to connect to the server. Please check your internet connection."
+          }
+        }
+      }
+    },
+    "error.authentication": {
+      "comment": "Authentication failed error",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentication failed. Please sign in again."
+          }
+        }
+      }
+    },
+    "error.notFound": {
+      "comment": "Resource not found error with name",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The requested %@ could not be found."
+          }
+        }
+      }
+    },
+    "error.validation": {
+      "comment": "Validation error with field name",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid value for %@. Please try again."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

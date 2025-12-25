@@ -4,16 +4,16 @@
 [![Bazel](https://img.shields.io/badge/Bazel-7.x%20%7C%208.x-43A047)](https://bazel.build)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-F05138)](https://swift.org)
 
-Type-safe resource accessors for Swift. Zero dependencies and Bazel rules included.
+Type-safe resource accessors for Swift. Zero dependencies with a Bazel ruleset included.
 
 ## Why?
 
-- **Use without Xcode** — Works with Bazel, SPM, or any build system
-- **No runtime dependencies** — Generated code is pure Swift
-- **Bazel support** — With `rules_swift`, create `swift_resources_library` rules
-- **Cross-platform output** — Generated code supports UIKit, AppKit, and SwiftUI
+- **Xcode independent** — Works with Bazel, SPM, or CLI
+- **No dependencies** — During runtime or generation
+- **Bazel support** — `swift_resources_library` rule
+- **Cross-platform** — Accessors for UIKit, AppKit, and SwiftUI
 
-Inspired by [R.swift](https://github.com/mac-cain13/R.swift) and [SwiftGen](https://github.com/SwiftGen/SwiftGen), but designed for Bazel-first workflows without Xcode project file dependencies.
+Inspired by [R.swift](https://github.com/mac-cain13/R.swift) and [SwiftGen](https://github.com/SwiftGen/SwiftGen)
 
 ## Supported Resource Types
 
@@ -25,13 +25,13 @@ Generated code uses `Resources` as the default namespace (change via `--module-n
 
 ```swift
 // Fixed size
-let font = Resources.fonts.interBold.font(size: 16)         // SwiftUI
-let uiFont = Resources.fonts.interBold.uiFont(size: 16)     // UIKit
-let nsFont = Resources.fonts.interBold.nsFont(size: 16)     // AppKit
+let font = Resources.fonts.lilexBold.font(size: 16)         // SwiftUI
+let uiFont = Resources.fonts.lilexBold.uiFont(size: 16)     // UIKit
+let nsFont = Resources.fonts.lilexBold.nsFont(size: 16)     // AppKit
 
-// Dynamic Type scaling (automatically adjusts to the device text size preference)
-let scaledFont = Resources.fonts.interBold.font(size: 16, relativeTo: .body)
-let scaledUIFont = Resources.fonts.interBold.uiFont(size: 28, relativeTo: .title1)
+// Dynamic Type
+let scaledFont = Resources.fonts.lilexBold.font(size: 16, relativeTo: .body)
+let scaledUIFont = Resources.fonts.lilexBold.uiFont(size: 28, relativeTo: .title1)
 ```
 
 ### Images
@@ -65,7 +65,7 @@ let data = Resources.files.config.data                      // Data?
 
 ### Localized Strings
 
-**Input:** `.xcstrings` (String Catalogs) or `.strings`
+**Input:** `.xcstrings` or `.strings`
 
 ```swift
 let title = Resources.strings.localizable.welcomeTitle      // Simple string
@@ -97,6 +97,18 @@ bazel_dep(name = "rules_swift_resources", version = "0.1.0")
 
 ### CLI
 
+**Swift:**
+```bash
+swift build
+.build/debug/sr generate --help
+```
+
+**Bazel:**
+```bash
+bazel run //:sr -- generate --help
+```
+
+**Example:**
 ```bash
 sr generate \
   --fonts Resources/Fonts \
