@@ -129,15 +129,17 @@ enum SwiftEmitter {
         output += "        \(access)let fontName: String\n"
         output += "        \(access)let bundle: Bundle\n"
 
-        // UIKit accessor
+        // UIKit accessor with optional Dynamic Type scaling
         output += "\n"
         output += "        #if canImport(UIKit)\n"
-        output += "        \(access)func uiFont(size: CGFloat) -> UIFont? {\n"
-        output += "            UIFont(name: fontName, size: size)\n"
+        output += "        \(access)func uiFont(size: CGFloat, relativeTo textStyle: UIFont.TextStyle? = nil) -> UIFont? {\n"
+        output += "            guard let font = UIFont(name: fontName, size: size) else { return nil }\n"
+        output += "            guard let textStyle else { return font }\n"
+        output += "            return UIFontMetrics(forTextStyle: textStyle).scaledFont(for: font)\n"
         output += "        }\n"
         output += "        #endif\n"
 
-        // AppKit accessor
+        // AppKit accessor (no Dynamic Type on macOS)
         output += "\n"
         output += "        #if canImport(AppKit) && !targetEnvironment(macCatalyst)\n"
         output += "        \(access)func nsFont(size: CGFloat) -> NSFont? {\n"
@@ -145,11 +147,14 @@ enum SwiftEmitter {
         output += "        }\n"
         output += "        #endif\n"
 
-        // SwiftUI accessor
+        // SwiftUI accessor with optional Dynamic Type scaling
         output += "\n"
         output += "        #if canImport(SwiftUI)\n"
-        output += "        \(access)func font(size: CGFloat) -> Font {\n"
-        output += "            Font.custom(fontName, size: size)\n"
+        output += "        \(access)func font(size: CGFloat, relativeTo textStyle: Font.TextStyle? = nil) -> Font {\n"
+        output += "            if let textStyle {\n"
+        output += "                return Font.custom(fontName, size: size, relativeTo: textStyle)\n"
+        output += "            }\n"
+        output += "            return Font.custom(fontName, size: size)\n"
         output += "        }\n"
         output += "        #endif\n"
 

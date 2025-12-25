@@ -83,9 +83,15 @@ struct SwiftEmitterTests {
             configuration: config
         )
 
-        #expect(output.contains("func uiFont(size: CGFloat) -> UIFont?"))
+        #expect(output
+            .contains(
+                "func uiFont(size: CGFloat, relativeTo textStyle: UIFont.TextStyle? = nil) -> UIFont?"
+            ))
         #expect(output.contains("func nsFont(size: CGFloat) -> NSFont?"))
-        #expect(output.contains("func font(size: CGFloat) -> Font"))
+        #expect(output
+            .contains(
+                "func font(size: CGFloat, relativeTo textStyle: Font.TextStyle? = nil) -> Font"
+            ))
     }
 
     @Test("Generates all framework accessors for images")

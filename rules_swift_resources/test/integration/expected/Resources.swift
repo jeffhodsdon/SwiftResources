@@ -24,8 +24,10 @@ enum TestResources {
         let bundle: Bundle
 
         #if canImport(UIKit)
-        func uiFont(size: CGFloat) -> UIFont? {
-            UIFont(name: fontName, size: size)
+        func uiFont(size: CGFloat, relativeTo textStyle: UIFont.TextStyle? = nil) -> UIFont? {
+            guard let font = UIFont(name: fontName, size: size) else { return nil }
+            guard let textStyle else { return font }
+            return UIFontMetrics(forTextStyle: textStyle).scaledFont(for: font)
         }
         #endif
 
@@ -36,8 +38,11 @@ enum TestResources {
         #endif
 
         #if canImport(SwiftUI)
-        func font(size: CGFloat) -> Font {
-            Font.custom(fontName, size: size)
+        func font(size: CGFloat, relativeTo textStyle: Font.TextStyle? = nil) -> Font {
+            if let textStyle {
+                return Font.custom(fontName, size: size, relativeTo: textStyle)
+            }
+            return Font.custom(fontName, size: size)
         }
         #endif
     }

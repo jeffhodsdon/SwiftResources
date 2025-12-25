@@ -24,9 +24,14 @@ Generated code uses `Resources` as the default namespace (change via `--module-n
 **Input:** `.ttf`, `.otf`
 
 ```swift
+// Fixed size
 let font = Resources.fonts.interBold.font(size: 16)         // SwiftUI
 let uiFont = Resources.fonts.interBold.uiFont(size: 16)     // UIKit
 let nsFont = Resources.fonts.interBold.nsFont(size: 16)     // AppKit
+
+// Dynamic Type scaling (automatically adjusts to the device text size preference)
+let scaledFont = Resources.fonts.interBold.font(size: 16, relativeTo: .body)
+let scaledUIFont = Resources.fonts.interBold.uiFont(size: 28, relativeTo: .title1)
 ```
 
 ### Images
