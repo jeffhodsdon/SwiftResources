@@ -7,6 +7,7 @@ test_suite(
         "//rules_swift_resources/test/integration:golden_test",
         "//rules_swift_resources/test/integration:generate_public_builds",
         "//rules_swift_resources/test/integration:generate_bundle_override_builds",
+        "//rules_swift_resources/test/integration:generate_force_unwrap_builds",
         "//rules_swift_resources/test/integration:library_compiles",
     ],
 )

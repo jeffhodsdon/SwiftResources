@@ -40,13 +40,15 @@ struct SwiftEmitterTests {
         moduleName: String = "Resources",
         accessLevel: String = "internal",
         bundleOverride: String? = nil,
-        registerFonts: Bool = true
+        registerFonts: Bool = true,
+        forceUnwrap: Bool = false
     ) -> SwiftEmitter.Configuration {
         SwiftEmitter.Configuration(
             moduleName: moduleName,
             accessLevel: accessLevel,
             bundleOverride: bundleOverride,
-            registerFonts: registerFonts
+            registerFonts: registerFonts,
+            forceUnwrap: forceUnwrap
         )
     }
 
@@ -415,5 +417,127 @@ struct SwiftEmitterTests {
         #expect(output.contains("enum fonts {"))
         #expect(output.contains("enum images {"))
         #expect(output.contains("enum files {"))
+    }
+
+    // MARK: - Force Unwrap Tests
+
+    @Test("Force unwrap generates non-optional UIFont")
+    func forceUnwrapUIFont() {
+        let config = makeConfig(forceUnwrap: true)
+        let output = SwiftEmitter.emit(
+            fonts: sampleFonts,
+            images: [],
+            colors: [],
+            files: [],
+            configuration: config
+        )
+
+        #expect(output.contains("-> UIFont {"))
+        #expect(!output.contains("-> UIFont?"))
+        #expect(output.contains("UIFont(name: fontName, size: size)!"))
+    }
+
+    @Test("Force unwrap generates non-optional NSFont")
+    func forceUnwrapNSFont() {
+        let config = makeConfig(forceUnwrap: true)
+        let output = SwiftEmitter.emit(
+            fonts: sampleFonts,
+            images: [],
+            colors: [],
+            files: [],
+            configuration: config
+        )
+
+        #expect(output.contains("-> NSFont {"))
+        #expect(!output.contains("-> NSFont?"))
+        #expect(output.contains("NSFont(name: fontName, size: size)!"))
+    }
+
+    @Test("Force unwrap generates non-optional UIImage")
+    func forceUnwrapUIImage() {
+        let config = makeConfig(forceUnwrap: true)
+        let output = SwiftEmitter.emit(
+            fonts: [],
+            images: sampleImages,
+            colors: [],
+            files: [],
+            configuration: config
+        )
+
+        #expect(output.contains("var uiImage: UIImage {"))
+        #expect(!output.contains("var uiImage: UIImage?"))
+        #expect(output.contains("UIImage(named: name, in: bundle, with: nil)!"))
+    }
+
+    @Test("Force unwrap generates non-optional NSImage")
+    func forceUnwrapNSImage() {
+        let config = makeConfig(forceUnwrap: true)
+        let output = SwiftEmitter.emit(
+            fonts: [],
+            images: sampleImages,
+            colors: [],
+            files: [],
+            configuration: config
+        )
+
+        #expect(output.contains("var nsImage: NSImage {"))
+        #expect(!output.contains("var nsImage: NSImage?"))
+        #expect(output.contains("bundle.image(forResource: name)!"))
+    }
+
+    let sampleColors = [
+        DiscoveredColor(name: "primary"),
+        DiscoveredColor(name: "secondary"),
+    ]
+
+    @Test("Force unwrap generates non-optional UIColor")
+    func forceUnwrapUIColor() {
+        let config = makeConfig(forceUnwrap: true)
+        let output = SwiftEmitter.emit(
+            fonts: [],
+            images: [],
+            colors: sampleColors,
+            files: [],
+            configuration: config
+        )
+
+        #expect(output.contains("var uiColor: UIColor {"))
+        #expect(!output.contains("var uiColor: UIColor?"))
+        #expect(output.contains("UIColor(named: name, in: bundle, compatibleWith: nil)!"))
+    }
+
+    @Test("Force unwrap generates non-optional NSColor")
+    func forceUnwrapNSColor() {
+        let config = makeConfig(forceUnwrap: true)
+        let output = SwiftEmitter.emit(
+            fonts: [],
+            images: [],
+            colors: sampleColors,
+            files: [],
+            configuration: config
+        )
+
+        #expect(output.contains("var nsColor: NSColor {"))
+        #expect(!output.contains("var nsColor: NSColor?"))
+        #expect(output.contains("NSColor(named: name, bundle: bundle)!"))
+    }
+
+    @Test("Force unwrap generates non-optional FileResource url and data")
+    func forceUnwrapFileResource() {
+        let config = makeConfig(forceUnwrap: true)
+        let output = SwiftEmitter.emit(
+            fonts: [],
+            images: [],
+            colors: [],
+            files: sampleFiles,
+            configuration: config
+        )
+
+        #expect(output.contains("var url: URL {"))
+        #expect(!output.contains("var url: URL?"))
+        #expect(output.contains("bundle.url(forResource: name, withExtension: fileExtension)!"))
+        #expect(output.contains("var data: Data {"))
+        #expect(!output.contains("var data: Data?"))
+        #expect(output.contains("try! Data(contentsOf: url)"))
     }
 }

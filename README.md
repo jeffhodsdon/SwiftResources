@@ -13,7 +13,7 @@ Type-safe resource accessors for Swift. Zero dependencies with a Bazel ruleset i
 - **Bazel support** — `swift_resources_library` rule
 - **Cross-platform** — Accessors for UIKit, AppKit, and SwiftUI
 
-Inspired by [R.swift](https://github.com/mac-cain13/R.swift) and [SwiftGen](https://github.com/SwiftGen/SwiftGen)
+Inspired by [R.swift](https://github.com/mac-cain13/R.swift)
 
 ## Supported Resource Types
 
@@ -77,7 +77,7 @@ let items = Resources.strings.localizable.itemsCount(5)     // Pluralized
 
 - **Swift** 5.9+
 - **macOS** 13+ (for CLI font name extraction via CoreText)
-- **Bazel** 7.x or 8.x (for Bazel rules)
+- **Bazel** 8.x (for Bazel rules)
 
 ## Installation
 
@@ -136,6 +136,7 @@ sr generate \
 | `--access-level <level>` | `internal` | `public` or `internal` |
 | `--bundle <expr>` | BundleFinder | Bundle expression (`.module`, `.main`, or custom) |
 | `--no-register-fonts` | — | Disable font registration code generation |
+| `--force-unwrap` | — | Generate non-optional accessors with force unwrap |
 
 ### Bazel
 

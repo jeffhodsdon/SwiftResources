@@ -74,6 +74,7 @@ struct SR {
           --access-level <lvl>      Access level: public or internal (default: internal)
           --bundle <expr>           Bundle override (e.g., .module, .main)
           --no-register-fonts       Skip registerFonts() generation (enabled by default)
+          --force-unwrap            Generate non-optional accessors with force unwrap
           --help, -h                Show help information
         """)
     }
@@ -99,6 +100,7 @@ struct GenerateConfig {
     var accessLevel: String = "internal"
     var bundle: String?
     var registerFonts: Bool = true
+    var forceUnwrap: Bool = false
     var developmentRegion: String? // source language for .strings files
 }
 
@@ -264,6 +266,10 @@ func parseGenerateArgs(_ args: [String]) throws -> GenerateConfig {
             config.registerFonts = false
             i += 1
 
+        case "--force-unwrap":
+            config.forceUnwrap = true
+            i += 1
+
         default:
             throw CLIError("Unknown option: \(arg)")
         }
@@ -398,7 +404,8 @@ func generate(config: GenerateConfig) throws {
         moduleName: config.moduleName,
         accessLevel: config.accessLevel,
         bundleOverride: config.bundle,
-        registerFonts: config.registerFonts
+        registerFonts: config.registerFonts,
+        forceUnwrap: config.forceUnwrap
     )
 
     // Generate code

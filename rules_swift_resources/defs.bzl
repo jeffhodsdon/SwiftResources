@@ -101,6 +101,9 @@ def _swift_resources_generate_impl(ctx):
     if not ctx.attr.register_fonts:
         args.add("--no-register-fonts")
 
+    if ctx.attr.force_unwrap:
+        args.add("--force-unwrap")
+
     # Run the generator
     ctx.actions.run(
         inputs = ctx.files.fonts + ctx.files.images + ctx.files.files + ctx.files.xcassets + ctx.files.strings,
@@ -157,6 +160,10 @@ swift_resources_generate = rule(
             default = True,
             doc = "Generate registerFonts() function",
         ),
+        "force_unwrap": attr.bool(
+            default = False,
+            doc = "Generate non-optional accessors with force unwrap",
+        ),
         "out": attr.output(
             mandatory = True,
             doc = "Output Swift file",
@@ -182,6 +189,7 @@ def swift_resources_library(
         access_level = "internal",
         bundle = None,
         register_fonts = True,
+        force_unwrap = False,
         deps = [],
         visibility = None,
         tags = [],
@@ -204,6 +212,7 @@ def swift_resources_library(
         access_level: Access level (public or internal).
         bundle: Bundle expression. Default: auto-detect via BundleFinder.
         register_fonts: Whether to generate registerFonts() function.
+        force_unwrap: Generate non-optional accessors with force unwrap.
         deps: Additional Swift dependencies.
         visibility: Target visibility.
         tags: Target tags.
@@ -225,6 +234,7 @@ def swift_resources_library(
         access_level = access_level,
         bundle = bundle,
         register_fonts = register_fonts,
+        force_unwrap = force_unwrap,
         out = gen_out,
         tags = tags,
         testonly = testonly,

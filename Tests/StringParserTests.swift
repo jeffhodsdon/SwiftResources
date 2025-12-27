@@ -342,7 +342,8 @@ struct SwiftEmitterStringTests {
             moduleName: moduleName,
             accessLevel: accessLevel,
             bundleOverride: bundle,
-            registerFonts: false
+            registerFonts: false,
+            forceUnwrap: false
         )
     }
 

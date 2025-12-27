@@ -10,9 +10,14 @@ enum SwiftEmitter {
         let accessLevel: String
         let bundleOverride: String? // nil = use BundleFinder
         let registerFonts: Bool
+        let forceUnwrap: Bool
 
         var access: String {
             accessLevel == "public" ? "public " : ""
+        }
+
+        var unwrap: String {
+            forceUnwrap ? "!" : ""
         }
 
         var bundleExpression: String {
@@ -123,6 +128,7 @@ enum SwiftEmitter {
 
     private static func emitFontResourceStruct(configuration: Configuration) -> String {
         let access = configuration.access
+        let forceUnwrap = configuration.forceUnwrap
         var output = "\n"
         output += "    // MARK: - Font Resource\n\n"
         output += "    \(access)struct FontResource: Sendable, Hashable {\n"
@@ -132,18 +138,31 @@ enum SwiftEmitter {
         // UIKit accessor with optional Dynamic Type scaling
         output += "\n"
         output += "        #if canImport(UIKit)\n"
-        output += "        \(access)func uiFont(size: CGFloat, relativeTo textStyle: UIFont.TextStyle? = nil) -> UIFont? {\n"
-        output += "            guard let font = UIFont(name: fontName, size: size) else { return nil }\n"
-        output += "            guard let textStyle else { return font }\n"
-        output += "            return UIFontMetrics(forTextStyle: textStyle).scaledFont(for: font)\n"
-        output += "        }\n"
+        if forceUnwrap {
+            output += "        \(access)func uiFont(size: CGFloat, relativeTo textStyle: UIFont.TextStyle? = nil) -> UIFont {\n"
+            output += "            let font = UIFont(name: fontName, size: size)!\n"
+            output += "            guard let textStyle else { return font }\n"
+            output += "            return UIFontMetrics(forTextStyle: textStyle).scaledFont(for: font)\n"
+            output += "        }\n"
+        } else {
+            output += "        \(access)func uiFont(size: CGFloat, relativeTo textStyle: UIFont.TextStyle? = nil) -> UIFont? {\n"
+            output += "            guard let font = UIFont(name: fontName, size: size) else { return nil }\n"
+            output += "            guard let textStyle else { return font }\n"
+            output += "            return UIFontMetrics(forTextStyle: textStyle).scaledFont(for: font)\n"
+            output += "        }\n"
+        }
         output += "        #endif\n"
 
         // AppKit accessor (no Dynamic Type on macOS)
         output += "\n"
         output += "        #if canImport(AppKit) && !targetEnvironment(macCatalyst)\n"
-        output += "        \(access)func nsFont(size: CGFloat) -> NSFont? {\n"
-        output += "            NSFont(name: fontName, size: size)\n"
+        if forceUnwrap {
+            output += "        \(access)func nsFont(size: CGFloat) -> NSFont {\n"
+            output += "            NSFont(name: fontName, size: size)!\n"
+        } else {
+            output += "        \(access)func nsFont(size: CGFloat) -> NSFont? {\n"
+            output += "            NSFont(name: fontName, size: size)\n"
+        }
         output += "        }\n"
         output += "        #endif\n"
 
@@ -164,6 +183,7 @@ enum SwiftEmitter {
 
     private static func emitImageResourceStruct(configuration: Configuration) -> String {
         let access = configuration.access
+        let forceUnwrap = configuration.forceUnwrap
         var output = "\n"
         output += "    // MARK: - Image Resource\n\n"
         output += "    \(access)struct ImageResource: Sendable, Hashable {\n"
@@ -173,16 +193,26 @@ enum SwiftEmitter {
         // UIKit accessor
         output += "\n"
         output += "        #if canImport(UIKit)\n"
-        output += "        \(access)var uiImage: UIImage? {\n"
-        output += "            UIImage(named: name, in: bundle, with: nil)\n"
+        if forceUnwrap {
+            output += "        \(access)var uiImage: UIImage {\n"
+            output += "            UIImage(named: name, in: bundle, with: nil)!\n"
+        } else {
+            output += "        \(access)var uiImage: UIImage? {\n"
+            output += "            UIImage(named: name, in: bundle, with: nil)\n"
+        }
         output += "        }\n"
         output += "        #endif\n"
 
         // AppKit accessor
         output += "\n"
         output += "        #if canImport(AppKit) && !targetEnvironment(macCatalyst)\n"
-        output += "        \(access)var nsImage: NSImage? {\n"
-        output += "            bundle.image(forResource: name)\n"
+        if forceUnwrap {
+            output += "        \(access)var nsImage: NSImage {\n"
+            output += "            bundle.image(forResource: name)!\n"
+        } else {
+            output += "        \(access)var nsImage: NSImage? {\n"
+            output += "            bundle.image(forResource: name)\n"
+        }
         output += "        }\n"
         output += "        #endif\n"
 
@@ -200,6 +230,7 @@ enum SwiftEmitter {
 
     private static func emitColorResourceStruct(configuration: Configuration) -> String {
         let access = configuration.access
+        let forceUnwrap = configuration.forceUnwrap
         var output = "\n"
         output += "    // MARK: - Color Resource\n\n"
         output += "    \(access)struct ColorResource: Sendable, Hashable {\n"
@@ -209,16 +240,26 @@ enum SwiftEmitter {
         // UIKit accessor
         output += "\n"
         output += "        #if canImport(UIKit)\n"
-        output += "        \(access)var uiColor: UIColor? {\n"
-        output += "            UIColor(named: name, in: bundle, compatibleWith: nil)\n"
+        if forceUnwrap {
+            output += "        \(access)var uiColor: UIColor {\n"
+            output += "            UIColor(named: name, in: bundle, compatibleWith: nil)!\n"
+        } else {
+            output += "        \(access)var uiColor: UIColor? {\n"
+            output += "            UIColor(named: name, in: bundle, compatibleWith: nil)\n"
+        }
         output += "        }\n"
         output += "        #endif\n"
 
         // AppKit accessor
         output += "\n"
         output += "        #if canImport(AppKit) && !targetEnvironment(macCatalyst)\n"
-        output += "        \(access)var nsColor: NSColor? {\n"
-        output += "            NSColor(named: name, bundle: bundle)\n"
+        if forceUnwrap {
+            output += "        \(access)var nsColor: NSColor {\n"
+            output += "            NSColor(named: name, bundle: bundle)!\n"
+        } else {
+            output += "        \(access)var nsColor: NSColor? {\n"
+            output += "            NSColor(named: name, bundle: bundle)\n"
+        }
         output += "        }\n"
         output += "        #endif\n"
 
@@ -236,19 +277,29 @@ enum SwiftEmitter {
 
     private static func emitFileResourceStruct(configuration: Configuration) -> String {
         let access = configuration.access
+        let forceUnwrap = configuration.forceUnwrap
         var output = "\n"
         output += "    // MARK: - File Resource\n\n"
         output += "    \(access)struct FileResource: Sendable, Hashable {\n"
         output += "        \(access)let name: String\n"
         output += "        \(access)let fileExtension: String\n"
         output += "        \(access)let bundle: Bundle\n\n"
-        output += "        \(access)var url: URL? {\n"
-        output += "            bundle.url(forResource: name, withExtension: fileExtension)\n"
-        output += "        }\n\n"
-        output += "        \(access)var data: Data? {\n"
-        output += "            guard let url = url else { return nil }\n"
-        output += "            return try? Data(contentsOf: url)\n"
-        output += "        }\n"
+        if forceUnwrap {
+            output += "        \(access)var url: URL {\n"
+            output += "            bundle.url(forResource: name, withExtension: fileExtension)!\n"
+            output += "        }\n\n"
+            output += "        \(access)var data: Data {\n"
+            output += "            try! Data(contentsOf: url)\n"
+            output += "        }\n"
+        } else {
+            output += "        \(access)var url: URL? {\n"
+            output += "            bundle.url(forResource: name, withExtension: fileExtension)\n"
+            output += "        }\n\n"
+            output += "        \(access)var data: Data? {\n"
+            output += "            guard let url = url else { return nil }\n"
+            output += "            return try? Data(contentsOf: url)\n"
+            output += "        }\n"
+        }
         output += "    }\n"
         return output
     }

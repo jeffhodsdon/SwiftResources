@@ -63,3 +63,17 @@ build_test(
     name = "library_compiles",
     targets = [":compiled_resources"],
 )
+
+# Test: Generate with force_unwrap
+swift_resources_generate(
+    name = "generate_force_unwrap",
+    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
+    force_unwrap = True,
+    module_name = "ForceUnwrapResources",
+    out = "ForceUnwrapResources.swift",
+)
+
+build_test(
+    name = "generate_force_unwrap_builds",
+    targets = [":generate_force_unwrap"],
+)
