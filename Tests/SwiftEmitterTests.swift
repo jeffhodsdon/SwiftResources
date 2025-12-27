@@ -36,6 +36,11 @@ struct SwiftEmitterTests {
         ),
     ]
 
+    let sampleColors = [
+        DiscoveredColor(name: "primary"),
+        DiscoveredColor(name: "secondary"),
+    ]
+
     func makeConfig(
         moduleName: String = "Resources",
         accessLevel: String = "internal",
@@ -485,11 +490,6 @@ struct SwiftEmitterTests {
         #expect(output.contains("bundle.image(forResource: name)!"))
     }
 
-    let sampleColors = [
-        DiscoveredColor(name: "primary"),
-        DiscoveredColor(name: "secondary"),
-    ]
-
     @Test("Force unwrap generates non-optional UIColor")
     func forceUnwrapUIColor() {
         let config = makeConfig(forceUnwrap: true)
@@ -535,7 +535,8 @@ struct SwiftEmitterTests {
 
         #expect(output.contains("var url: URL {"))
         #expect(!output.contains("var url: URL?"))
-        #expect(output.contains("bundle.url(forResource: name, withExtension: fileExtension)!"))
+        #expect(output
+            .contains("bundle.url(forResource: name, withExtension: fileExtension)!"))
         #expect(output.contains("var data: Data {"))
         #expect(!output.contains("var data: Data?"))
         #expect(output.contains("try! Data(contentsOf: url)"))
