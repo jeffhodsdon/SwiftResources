@@ -26,3 +26,13 @@ jobs:
         env:
           TAG: ${{ inputs.tag }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-to-bcr:
+    needs: create-release
+    uses: bazel-contrib/publish-to-bcr/.github/workflows/publish.yaml@v0.2.0
+    with:
+      tag_name: ${{ inputs.tag }}
+      registry_fork: jeffhodsdon/bazel-central-registry
+      attest: false
+    secrets:
+      publish_token: ${{ secrets.BCR_PUBLISH_TOKEN }}

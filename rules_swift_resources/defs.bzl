@@ -7,33 +7,26 @@ load("@rules_swift//swift:swift.bzl", "SwiftInfo", "swift_library")
 load(":providers.bzl", "SwiftResourceInfo")
 
 # -----------------------------------------------------------------------------
-# Wrapper rule to expose SwiftResourceInfo alongside SwiftInfo
+# swift_resources: top-level rule exposing SwiftResourceInfo for tooling
 # -----------------------------------------------------------------------------
 
-def _swift_resources_library_wrapper_impl(ctx):
-    """Wraps swift_library and adds SwiftResourceInfo for tooling integration."""
+def _swift_resources_impl(ctx):
+    """Forwards providers from inner swift_library and adds SwiftResourceInfo."""
     resource_files = ctx.files.fonts + ctx.files.images + ctx.files.files + ctx.files.xcassets + ctx.files.strings
 
-    providers = [
+    inner = ctx.attr.inner_lib
+    return [
         SwiftResourceInfo(
             module_name = ctx.attr.module_name,
             resources = depset(resource_files),
         ),
+        inner[SwiftInfo],
+        inner[CcInfo],
+        inner[DefaultInfo],
     ]
 
-    # Forward providers from the inner swift_library
-    inner = ctx.attr.inner_lib
-    if SwiftInfo in inner:
-        providers.append(inner[SwiftInfo])
-    if CcInfo in inner:
-        providers.append(inner[CcInfo])
-    if DefaultInfo in inner:
-        providers.append(inner[DefaultInfo])
-
-    return providers
-
-_swift_resources_library_wrapper = rule(
-    implementation = _swift_resources_library_wrapper_impl,
+swift_resources = rule(
+    implementation = _swift_resources_impl,
     attrs = {
         "files": attr.label_list(allow_files = True),
         "fonts": attr.label_list(allow_files = True),
@@ -47,7 +40,7 @@ _swift_resources_library_wrapper = rule(
         ),
         "module_name": attr.string(mandatory = True),
     },
-    doc = "Wrapper that adds SwiftResourceInfo to a swift_library.",
+    doc = "Swift resources module. Provides SwiftResourceInfo for tooling integration.",
 )
 
 def _swift_resources_generate_impl(ctx):
@@ -194,34 +187,66 @@ def swift_resources_library(
         visibility = None,
         tags = [],
         testonly = False):
-    """High-level macro that generates Swift code, compiles it, and bundles resources.
+    """Generates a Swift module with type-safe resource accessors.
 
-    This macro creates three targets:
-    - {name}: The Swift library with type-safe resource accessors
-    - {name}.resources: A filegroup containing all resource files (for ios_application)
+    Creates four targets:
+
+    - {name}_gen (swift_resources_generate):
+        Runs the `sr` CLI to generate Swift code with type-safe accessors
+        for fonts, images, colors, files, and strings.
+
+    - {name}_lib (swift_library):
+        Compiles the generated Swift code. Private visibility; not intended
+        for direct use.
+
+    - {name} (swift_resources):
+        The primary target to depend on. Forwards SwiftInfo, CcInfo, and
+        DefaultInfo from the inner library. Also provides SwiftResourceInfo
+        for tooling integration (e.g., rules_swift_previews).
+
+    - {name}.resources (filegroup):
+        All resource files bundled together. Pass to ios_application's
+        `resources` attribute for runtime bundling.
+
+    Example:
+        swift_resources_library(
+            name = "DesignSystemResources",
+            fonts = glob(["Fonts/**/*.ttf"]),
+            images = glob(["Images/**/*.png"]),
+            module_name = "DesignSystem",
+        )
+
+        # Depend on the module
+        swift_library(
+            deps = [":DesignSystemResources"],
+        )
+
+        # Bundle resources in app
+        ios_application(
+            resources = [":DesignSystemResources.resources"],
+        )
 
     Args:
         name: Target name.
-        fonts: List of font files (.ttf, .otf).
-        images: List of image files.
-        files: List of arbitrary files.
-        xcassets: List of asset catalog directories (.xcassets).
-        strings: List of string catalogs (.xcstrings) or .strings files.
+        fonts: Font files (.ttf, .otf).
+        images: Image files (.png, .jpg, .pdf, .svg, .heic).
+        files: Arbitrary files.
+        xcassets: Asset catalog directories (.xcassets).
+        strings: String catalogs (.xcstrings) or legacy .strings files.
         development_region: Source language for .strings files (auto-detected for .xcstrings).
-        module_name: Name of the generated enum namespace.
-        access_level: Access level (public or internal).
-        bundle: Bundle expression. Default: auto-detect via BundleFinder.
-        register_fonts: Whether to generate registerFonts() function.
-        force_unwrap: Generate non-optional accessors with force unwrap.
+        module_name: Generated enum namespace (default: "Resources").
+        access_level: "public" or "internal" (default: "internal").
+        bundle: Bundle expression (e.g., ".module", ".main"). Default: auto-detect.
+        register_fonts: Generate registerFonts() function (default: True).
+        force_unwrap: Generate non-optional accessors with force unwrap (default: False).
         deps: Additional Swift dependencies.
         visibility: Target visibility.
         tags: Target tags.
-        testonly: Whether this is a test-only target.
+        testonly: Test-only target.
     """
     gen_name = name + "_gen"
     gen_out = name + ".swift"
 
-    # Generate Swift code
     swift_resources_generate(
         name = gen_name,
         fonts = fonts,
@@ -240,7 +265,6 @@ def swift_resources_library(
         testonly = testonly,
     )
 
-    # Compile Swift library (inner target)
     all_resources = fonts + images + files + xcassets + strings
     inner_name = name + "_lib"
 
@@ -255,8 +279,7 @@ def swift_resources_library(
         testonly = testonly,
     )
 
-    # Wrapper that exposes SwiftResourceInfo for tooling integration
-    _swift_resources_library_wrapper(
+    swift_resources(
         name = name,
         files = files,
         fonts = fonts,

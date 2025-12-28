@@ -1,7 +1,7 @@
 # SwiftResources
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Bazel](https://img.shields.io/badge/Bazel-7.x%20%7C%208.x-43A047)](https://bazel.build)
+[![Bazel](https://img.shields.io/badge/Bazel-8.x+-43A047)](https://bazel.build)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-F05138)](https://swift.org)
 
 Type-safe resource accessors for Swift. Zero dependencies with a Bazel ruleset included.
@@ -77,7 +77,7 @@ let items = Resources.strings.localizable.itemsCount(5)     // Pluralized
 
 - **Swift** 5.9+
 - **macOS** 13+ (for CLI font name extraction via CoreText)
-- **Bazel** 8.x (for Bazel rules)
+- **Bazel** 8.x+ (for Bazel rules)
 
 ## Installation
 
@@ -153,7 +153,22 @@ swift_resources_library(
 )
 ```
 
-**Note:** `swift_resources_library` generates a `swift_library` with type-safe accessors—it does not bundle the resource files. Add resources to your `ios_application` or bundle rule separately. This allows you to use resources with type safety in static libraries.
+The macro creates a `.resources` filegroup for bundling:
+
+```python
+swift_library(
+    name = "MyApp",
+    deps = [":DesignSystemResources"],  # Type-safe accessors
+)
+
+ios_application(
+    name = "App",
+    deps = [":MyApp"],
+    resources = [":DesignSystemResources.resources"],  # Bundle the files
+)
+```
+
+**Note:** `swift_resources_library` generates type-safe accessors but does not bundle resource files automatically. Use the `.resources` filegroup to include them in your app bundle.
 
 ## License
 
