@@ -21,8 +21,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          COPYFILE_DISABLE=1 tar czvf "rules_swift_resources.$TAG.tar.gz" --exclude='.git' .
-          gh release create "$TAG" --title "$TAG" --target "$GITHUB_REF_NAME" --generate-notes "rules_swift_resources.$TAG.tar.gz"
+          PREFIX="rules_swift_resources-$TAG"
+          TARBALL="$PREFIX.tar.gz"
+          git archive --format=tar --prefix="$PREFIX/" HEAD | gzip > "$TARBALL"
+          gh release create "$TAG" --title "$TAG" --target "$GITHUB_REF_NAME" --generate-notes "$TARBALL"
         env:
           TAG: ${{ inputs.tag }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
