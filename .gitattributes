@@ -1,0 +1,11 @@
+#################################
+# Configuration for 'git archive'
+# See https://git-scm.com/docs/git-archive#ATTRIBUTES
+
+# Don't include these in the distribution artifact, to reduce size.
+.bcr export-ignore
+.github export-ignore
+.swiftpm export-ignore
+docs export-ignore
+examples export-ignore
+Tests export-ignore

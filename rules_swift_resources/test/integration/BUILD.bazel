@@ -1,18 +1,18 @@
 # Copyright 2025 Jeff Hodsdon
 # SPDX-License-Identifier: Apache-2.0
 
-load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("//rules_swift_resources:defs.bzl", "swift_resources_generate", "swift_resources_library")
 
 # Test: Generate code and compare to golden file
 swift_resources_generate(
     name = "generate_all_resources",
+    out = "Generated.swift",
+    files = ["//rules_swift_resources/test/fixtures:data"],
     fonts = ["//rules_swift_resources/test/fixtures:fonts"],
     images = ["//rules_swift_resources/test/fixtures:images"],
-    files = ["//rules_swift_resources/test/fixtures:data"],
     module_name = "TestResources",
-    out = "Generated.swift",
 )
 
 diff_test(
@@ -24,10 +24,10 @@ diff_test(
 # Test: Generate with public access level
 swift_resources_generate(
     name = "generate_public",
-    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
-    access_level = "public",
-    module_name = "PublicResources",
     out = "PublicResources.swift",
+    access_level = "public",
+    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
+    module_name = "PublicResources",
 )
 
 build_test(
@@ -38,10 +38,10 @@ build_test(
 # Test: Generate with bundle override
 swift_resources_generate(
     name = "generate_bundle_override",
-    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
-    bundle = ".module",
-    module_name = "ModuleResources",
     out = "ModuleResources.swift",
+    bundle = ".module",
+    fonts = ["//rules_swift_resources/test/fixtures:fonts"],
+    module_name = "ModuleResources",
 )
 
 build_test(
@@ -52,11 +52,11 @@ build_test(
 # Test: swift_resources_library macro compiles
 swift_resources_library(
     name = "compiled_resources",
+    access_level = "public",
+    files = ["//rules_swift_resources/test/fixtures:data"],
     fonts = ["//rules_swift_resources/test/fixtures:fonts"],
     images = ["//rules_swift_resources/test/fixtures:images"],
-    files = ["//rules_swift_resources/test/fixtures:data"],
     module_name = "CompiledResources",
-    access_level = "public",
 )
 
 build_test(
@@ -67,10 +67,10 @@ build_test(
 # Test: Generate with force_unwrap
 swift_resources_generate(
     name = "generate_force_unwrap",
+    out = "ForceUnwrapResources.swift",
     fonts = ["//rules_swift_resources/test/fixtures:fonts"],
     force_unwrap = True,
     module_name = "ForceUnwrapResources",
-    out = "ForceUnwrapResources.swift",
 )
 
 build_test(

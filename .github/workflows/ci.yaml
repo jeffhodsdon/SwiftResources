@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Bazel Tests
+        run: bazel test //rules_swift_resources/test:all_tests
+
+  conclusion:
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: technote-space/workflow-conclusion-action@v3.0.3
+      - name: Report status
+        run: |
+          if [ "$WORKFLOW_CONCLUSION" == "success" ]; then
+            echo "All tests passed"
+            exit 0
+          else
+            echo "Tests failed"
+            exit 1
+          fi

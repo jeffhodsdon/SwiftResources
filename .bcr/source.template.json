@@ -1,5 +1,6 @@
 {
   "integrity": "",
-  "strip_prefix": "rules_swift_resources-{TAG}",
-  "url": "https://github.com/{OWNER}/{REPO}/releases/download/{TAG}/rules_swift_resources-{TAG}.tar.gz"
+  "strip_prefix": "rules_swift_resources-{VERSION}",
+  "url": "https://github.com/{OWNER}/{REPO}/releases/download/{TAG}/rules_swift_resources-{TAG}.tar.gz",
+  "docs_url": "https://github.com/{OWNER}/{REPO}/releases/download/{TAG}/rules_swift_resources-{TAG}.docs.tar.gz"
 }

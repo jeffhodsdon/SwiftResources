@@ -3,6 +3,7 @@
 
 """Bazel rules for SwiftResources."""
 
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("@rules_swift//swift:swift.bzl", "SwiftInfo", "swift_library")
 load(":providers.bzl", "SwiftResourceInfo")
 
