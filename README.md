@@ -1,7 +1,7 @@
 # SwiftResources
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Bazel](https://img.shields.io/badge/Bazel-8.x+-43A047)](https://bazel.build)
+[![Bazel](https://img.shields.io/badge/Bazel-7.x+-43A047)](https://bazel.build)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-F05138)](https://swift.org)
 
 Type-safe resource accessors for Swift. Zero dependencies with a Bazel ruleset included.
@@ -77,7 +77,7 @@ let items = Resources.strings.localizable.itemsCount(5)     // Pluralized
 
 - **Swift** 5.9+
 - **macOS** 13+ (for CLI font name extraction via CoreText)
-- **Bazel** 8.x+ (for Bazel rules)
+- **Bazel** 7.x+ (for Bazel rules)
 
 ## Installation
 
