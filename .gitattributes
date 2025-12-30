@@ -8,4 +8,5 @@
 .swiftpm export-ignore
 docs export-ignore
 examples export-ignore
+rules_swift_resources/test export-ignore
 Tests export-ignore

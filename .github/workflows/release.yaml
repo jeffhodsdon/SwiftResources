@@ -17,8 +17,8 @@ jobs:
       release_files: rules_swift_resources-*.tar.gz
       prerelease: false
       tag_name: ${{ github.ref_name }}
-      # Only run Starlark unit tests - integration tests require macOS/Swift
-      bazel_test_command: "bazel test //rules_swift_resources/test:golden_test"
+      # Only run Starlark tests - integration tests require macOS/Swift
+      bazel_test_command: "bazel test //rules_swift_resources/test/starlark:starlark_tests"
 
   publish:
     needs: release

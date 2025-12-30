@@ -1,0 +1,22 @@
+# Copyright 2025 Jeff Hodsdon
+# SPDX-License-Identifier: Apache-2.0
+
+"""Starlark-only tests that run on Linux without Swift toolchain."""
+
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+
+# Test that bzl_library targets build successfully (validates starlark syntax)
+build_test(
+    name = "bzl_library_builds",
+    targets = [
+        "//rules_swift_resources:defs",
+        "//rules_swift_resources:providers",
+    ],
+)
+
+test_suite(
+    name = "starlark_tests",
+    tests = [
+        ":bzl_library_builds",
+    ],
+)
