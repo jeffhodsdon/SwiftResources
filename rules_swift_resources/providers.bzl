@@ -8,5 +8,6 @@ SwiftResourceInfo = provider(
     fields = {
         "module_name": "Name of the resource module.",
         "resources": "Depset of resource files (fonts, images, files).",
+        "generated_source": "The generated Swift source file.",
     },
 )

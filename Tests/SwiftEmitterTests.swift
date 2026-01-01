@@ -119,7 +119,7 @@ struct SwiftEmitterTests {
 
     // MARK: - BundleFinder Tests
 
-    @Test("Generates BundleFinder when no bundle override")
+    @Test("Generates BundleFinder with fallback pattern when no bundle override")
     func bundleFinderGenerated() {
         let config = makeConfig(bundleOverride: nil)
         let output = SwiftEmitter.emit(
@@ -130,9 +130,24 @@ struct SwiftEmitterTests {
             configuration: config
         )
 
-        #expect(output.contains("private class BundleFinder {}"))
-        #expect(output
-            .contains("private static let bundle = Bundle(for: BundleFinder.self)"))
+        // Check BundleFinder class with fallback pattern
+        #expect(output.contains("private final class BundleFinder {"))
+        #expect(output.contains("static let resourceBundle: Bundle"))
+
+        // Check SWIFT_PACKAGE conditional for Bundle.module
+        #expect(output.contains("#if SWIFT_PACKAGE"))
+        #expect(output.contains("return Bundle.module"))
+        #expect(output.contains("#else"))
+
+        // Check fallback candidates
+        #expect(output.contains("let bundleName = \"Resources_Resources\""))
+        #expect(output.contains("Bundle.main.resourceURL"))
+        #expect(output.contains("bundleResourceURL"))
+        #expect(output.contains("Bundle(for: BundleFinder.self)"))
+        #expect(output.contains("#endif"))
+
+        // Check that enum uses BundleFinder.resourceBundle
+        #expect(output.contains("private static let bundle = BundleFinder.resourceBundle"))
     }
 
     @Test("No BundleFinder when bundle override specified")

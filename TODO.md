@@ -1,0 +1,1 @@
+* Experiment with embeding data into static binaries via .swift files for resources that are always loaded on launch (fonts and filter luts) - https://github.com/swiftlang/swift-package-manager/pull/6067

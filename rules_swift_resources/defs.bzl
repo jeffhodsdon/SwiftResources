@@ -20,6 +20,7 @@ def _swift_resources_impl(ctx):
         SwiftResourceInfo(
             module_name = ctx.attr.module_name,
             resources = depset(resource_files),
+            generated_source = ctx.file.generated_source,
         ),
         inner[SwiftInfo],
         inner[CcInfo],
@@ -38,6 +39,11 @@ swift_resources = rule(
             mandatory = True,
             providers = [SwiftInfo],
             doc = "The inner swift_library target",
+        ),
+        "generated_source": attr.label(
+            mandatory = True,
+            allow_single_file = [".swift"],
+            doc = "The generated Swift source file",
         ),
         "module_name": attr.string(mandatory = True),
     },
@@ -288,6 +294,7 @@ def swift_resources_library(
         xcassets = xcassets,
         strings = strings,
         inner_lib = ":" + inner_name,
+        generated_source = ":" + gen_name,
         module_name = module_name,
         visibility = visibility,
     )

@@ -4,6 +4,7 @@
 """Starlark-only tests that run on Linux without Swift toolchain."""
 
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load(":provider_tests.bzl", "provider_test_suite")
 
 # Test that bzl_library targets build successfully (validates starlark syntax)
 build_test(
@@ -14,9 +15,13 @@ build_test(
     ],
 )
 
+# Test SwiftResourceInfo provider fields
+provider_test_suite(name = "provider_tests")
+
 test_suite(
     name = "starlark_tests",
     tests = [
         ":bzl_library_builds",
+        ":provider_tests",
     ],
 )

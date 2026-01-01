@@ -55,7 +55,7 @@ enum SwiftEmitter {
 
         // BundleFinder (if needed)
         if useBundleFinder {
-            output += "\nprivate class BundleFinder {}\n"
+            output += emitBundleFinder(moduleName: configuration.moduleName)
         }
 
         // Main enum
@@ -63,7 +63,7 @@ enum SwiftEmitter {
 
         // Bundle property
         if useBundleFinder {
-            output += "    private static let bundle = Bundle(for: BundleFinder.self)\n"
+            output += "    private static let bundle = BundleFinder.resourceBundle\n"
         }
 
         // Resource type structs
@@ -123,6 +123,49 @@ enum SwiftEmitter {
         output += "#if canImport(SwiftUI)\n"
         output += "import SwiftUI\n"
         output += "#endif\n"
+        return output
+    }
+
+    private static func emitBundleFinder(moduleName: String) -> String {
+        // SPM uses <ModuleName>_<TargetName>.bundle naming
+        let bundleName = "\(moduleName)_\(moduleName)"
+
+        var output = "\n"
+        output += "private final class BundleFinder {\n"
+        output += "    static let resourceBundle: Bundle = {\n"
+        output += "        // When built with SPM, Bundle.module is available and preferred\n"
+        output += "        #if SWIFT_PACKAGE\n"
+        output += "        return Bundle.module\n"
+        output += "        #else\n"
+        output += "        let bundleName = \"\(bundleName)\"\n"
+        output += "        let bundleResourceURL = Bundle(for: BundleFinder.self).resourceURL\n"
+        output += "\n"
+        output += "        let candidates = [\n"
+        output += "            // Bundle should be present here when the package is linked into an App.\n"
+        output += "            Bundle.main.resourceURL,\n"
+        output += "            // Bundle should be present here when the package is linked into a framework.\n"
+        output += "            bundleResourceURL,\n"
+        output += "            // For command-line tools.\n"
+        output += "            Bundle.main.bundleURL,\n"
+        output += "            // Bundle should be present here when running previews from a different package.\n"
+        output += "            bundleResourceURL?.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent(),\n"
+        output += "            bundleResourceURL?.deletingLastPathComponent().deletingLastPathComponent(),\n"
+        output += "            // Other package or embedding scenarios.\n"
+        output += "            bundleResourceURL?.deletingLastPathComponent(),\n"
+        output += "        ]\n"
+        output += "\n"
+        output += "        for candidate in candidates {\n"
+        output += "            let bundlePath = candidate?.appendingPathComponent(bundleName + \".bundle\")\n"
+        output += "            if let bundle = bundlePath.flatMap(Bundle.init(url:)) {\n"
+        output += "                return bundle\n"
+        output += "            }\n"
+        output += "        }\n"
+        output += "\n"
+        output += "        // Fallback to the bundle containing this code (works for Bazel builds)\n"
+        output += "        return Bundle(for: BundleFinder.self)\n"
+        output += "        #endif\n"
+        output += "    }()\n"
+        output += "}\n"
         return output
     }
 

@@ -57,6 +57,7 @@ swift_resources_library(
     fonts = ["//rules_swift_resources/test/fixtures:fonts"],
     images = ["//rules_swift_resources/test/fixtures:images"],
     module_name = "CompiledResources",
+    visibility = ["//rules_swift_resources/test:__subpackages__"],
 )
 
 build_test(
