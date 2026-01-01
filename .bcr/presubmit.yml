@@ -1,5 +1,5 @@
 matrix:
-  platform: [macos_arm64, macos_x86_64]
+  platform: [macos_arm64, macos]
   bazel: [7.x, 8.x]
 tasks:
   verify_targets:
