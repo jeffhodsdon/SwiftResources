@@ -53,6 +53,8 @@ def provider_test_suite(name):
     generated_source_test(
         name = "generated_source_test",
         target_under_test = "//rules_swift_resources/test/integration:compiled_resources",
+        # This test requires Swift toolchain (only available on macOS)
+        target_compatible_with = ["@platforms//os:macos"],
     )
 
     native.test_suite(
