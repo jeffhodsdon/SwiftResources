@@ -12,10 +12,44 @@ import AppKit
 import SwiftUI
 #endif
 
-private class BundleFinder {}
+private final class BundleFinder {
+    static let resourceBundle: Bundle = {
+        // When built with SPM, Bundle.module is available and preferred
+        #if SWIFT_PACKAGE
+        return Bundle.module
+        #else
+        let bundleName = "TestResources_TestResources"
+        let bundleResourceURL = Bundle(for: BundleFinder.self).resourceURL
+
+        let candidates = [
+            // Bundle should be present here when the package is linked into an App.
+            Bundle.main.resourceURL,
+            // Bundle should be present here when the package is linked into a framework.
+            bundleResourceURL,
+            // For command-line tools.
+            Bundle.main.bundleURL,
+            // Bundle should be present here when running previews from a different package.
+            bundleResourceURL?.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent(),
+            bundleResourceURL?.deletingLastPathComponent().deletingLastPathComponent(),
+            // Other package or embedding scenarios.
+            bundleResourceURL?.deletingLastPathComponent(),
+        ]
+
+        for candidate in candidates {
+            let bundlePath = candidate?.appendingPathComponent(bundleName + ".bundle")
+            if let bundle = bundlePath.flatMap(Bundle.init(url:)) {
+                return bundle
+            }
+        }
+
+        // Fallback to the bundle containing this code (works for Bazel builds)
+        return Bundle(for: BundleFinder.self)
+        #endif
+    }()
+}
 
 enum TestResources {
-    private static let bundle = Bundle(for: BundleFinder.self)
+    private static let bundle = BundleFinder.resourceBundle
 
     // MARK: - Font Resource
 
