@@ -90,7 +90,7 @@ bazel_dep(name = "rules_swift_resources", version = "0.1.0")
 ### Swift Package Manager
 
 ```swift
-.package(url: "https://github.com/jeffhodsdon/SwiftResources.git", from: "0.1.0")
+.package(url: "https://github.com/vincehodsdon/SwiftResources.git", from: "0.1.0")
 ```
 
 ## Usage
