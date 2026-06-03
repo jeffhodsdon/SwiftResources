@@ -76,11 +76,21 @@ def _swift_resources_generate_impl(ctx):
         for f in ctx.files.files:
             args.add(f.path)
 
-    # Add xcassets directories
+    # Add xcassets directories — derive unique `.xcassets` parent dirs from input
+    # file paths, since Bazel can't pass a directory label directly.
     if ctx.files.xcassets:
-        args.add("--xcassets")
+        xcassets_dirs = {}
         for f in ctx.files.xcassets:
-            args.add(f.path)
+            path = f.path
+            idx = path.find(".xcassets/")
+            if idx >= 0:
+                xcassets_dirs[path[:idx + len(".xcassets")]] = True
+            elif path.endswith(".xcassets"):
+                xcassets_dirs[path] = True
+        if xcassets_dirs:
+            args.add("--xcassets")
+            for d in sorted(xcassets_dirs.keys()):
+                args.add(d)
 
     # Add string files (.xcstrings or .strings)
     if ctx.files.strings:
@@ -134,8 +144,8 @@ swift_resources_generate = rule(
             doc = "Arbitrary files",
         ),
         "xcassets": attr.label_list(
-            allow_files = [".xcassets"],
-            doc = "Asset catalog directories (.xcassets)",
+            allow_files = True,
+            doc = "Asset catalog files (typically passed via glob of Assets.xcassets/**)",
         ),
         "strings": attr.label_list(
             allow_files = [".xcstrings", ".strings"],
